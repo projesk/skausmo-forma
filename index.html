@@ -1,0 +1,113 @@
+
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8">
+  <title>Skausmo vertinimo forma</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 1rem;
+      max-width: 700px;
+      margin: auto;
+    }
+    h2 {
+      color: #663399;
+    }
+    .pain-scale {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+    .pain-scale label {
+      flex: 0 0 60px;
+      text-align: center;
+      font-size: 14px;
+      padding: 10px;
+      border-radius: 6px;
+    }
+    .pain-scale input[type="radio"] {
+      margin-top: 5px;
+    }
+    .face {
+      font-size: 20px;
+      display: block;
+    }
+    .level-0-3 {
+      background-color: #b6e2a1;
+    }
+    .level-4-6 {
+      background-color: #fff5a1;
+    }
+    .level-7-9 {
+      background-color: #f8b4a1;
+    }
+    .level-10 {
+      background-color: #f36b6b;
+    }
+    .submit-btn {
+      padding: 0.5rem 1rem;
+      background: #663399;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h2>Skausmo vertinimo forma</h2>
+
+  <p><strong>Lovos ID:</strong> <span id="bed-id">...</span></p>
+
+  <form id="pain-form">
+    <p><strong>Pasirinkite skausmo lygį nuo 0 iki 10:</strong></p>
+    <div class="pain-scale">
+      <label class="level-0-3"><span class="face">😊</span><input type="radio" name="pain" value="0">0</label>
+      <label class="level-0-3"><span class="face">🙂</span><input type="radio" name="pain" value="1">1</label>
+      <label class="level-0-3"><span class="face">🙂</span><input type="radio" name="pain" value="2">2</label>
+      <label class="level-0-3"><span class="face">😐</span><input type="radio" name="pain" value="3">3</label>
+      <label class="level-4-6"><span class="face">😕</span><input type="radio" name="pain" value="4">4</label>
+      <label class="level-4-6"><span class="face">😕</span><input type="radio" name="pain" value="5">5</label>
+      <label class="level-4-6"><span class="face">😣</span><input type="radio" name="pain" value="6">6</label>
+      <label class="level-7-9"><span class="face">😖</span><input type="radio" name="pain" value="7">7</label>
+      <label class="level-7-9"><span class="face">😫</span><input type="radio" name="pain" value="8">8</label>
+      <label class="level-7-9"><span class="face">😭</span><input type="radio" name="pain" value="9">9</label>
+      <label class="level-10"><span class="face">🆘</span><input type="radio" name="pain" value="10">10</label>
+    </div>
+
+    <button class="submit-btn" type="submit">Pateikti</button>
+  </form>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const bedId = urlParams.get('id') || 'nežinoma';
+    document.getElementById('bed-id').innerText = bedId;
+
+    document.getElementById('pain-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const data = new FormData(this);
+      const jsonData = {};
+      data.forEach((value, key) => jsonData[key] = value);
+      jsonData.lova = bedId;
+      jsonData.timestamp = new Date().toISOString();
+
+      const scriptURL = 'https://script.google.com/macros/s/AKfycbw4cdh6miY0FPdhHUaR8CxaRNarh01J1rY_QhCN7A5TTvyDgcDED57jZOBGk0g-m05b_A/exec';
+      fetch(`${scriptURL}?id=${jsonData.lova}&pain=${jsonData.pain}&time=${jsonData.timestamp}`, {
+        method: 'GET'
+      })
+      .then(response => {
+        alert('Ačiū! Jūsų skausmo vertinimas išsaugotas.');
+        window.close();
+        window.location.href = "about:blank";
+      })
+      .catch(error => alert('Klaida! Nepavyko išsaugoti duomenų.'));
+    });
+  </script>
+</body>
+</html>
