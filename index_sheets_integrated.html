@@ -1,0 +1,163 @@
+
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8">
+  <title>DVPRS Skausmo Vertinimas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 1rem;
+      max-width: 700px;
+      margin: auto;
+    }
+    h2 {
+      color: #663399;
+    }
+    .pain-scale {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .pain-scale label {
+      flex: 1 0 7%;
+      text-align: center;
+      font-size: 12px;
+      margin: 5px;
+      border-radius: 6px;
+      padding: 5px;
+    }
+    .pain-scale input[type="radio"] {
+      display: block;
+      margin: auto;
+    }
+    .face {
+      width: 30px;
+      display: block;
+      margin: auto;
+    }
+    .level-0-3 {
+      background-color: #b6e2a1;
+    }
+    .level-4-6 {
+      background-color: #fff5a1;
+    }
+    .level-7-10 {
+      background-color: #f8b4a1;
+    }
+    .submit-btn, .toggle-btn {
+      padding: 0.5rem 1rem;
+      background: #663399;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+    .supplemental {
+      margin-top: 1rem;
+      display: none;
+    }
+    .supplemental label {
+      display: block;
+      margin-top: 1rem;
+    }
+    select {
+      width: 100%;
+      padding: 0.3rem;
+    }
+  </style>
+</head>
+<body>
+  <h2>Defense and Veterans Pain Rating Scale (DVPRS)</h2>
+  <p id="bed-label"><strong>Lovos ID:</strong> neidentifikuota</p>
+  <p><strong>Pasirinkite skausmo lygį nuo 0 (be skausmo) iki 10 (stipriausias skausmas):</strong></p>
+  <form id="pain-form">
+    <div class="pain-scale">
+      <label class="level-0-3"><img src="https://i.imgur.com/jYkTP5R.png" class="face"><input type="radio" name="pain" value="0">0</label>
+      <label class="level-0-3"><img src="https://i.imgur.com/jYkTP5R.png" class="face"><input type="radio" name="pain" value="1">1</label>
+      <label class="level-0-3"><img src="https://i.imgur.com/kD0aMe1.png" class="face"><input type="radio" name="pain" value="2">2</label>
+      <label class="level-0-3"><img src="https://i.imgur.com/kD0aMe1.png" class="face"><input type="radio" name="pain" value="3">3</label>
+      <label class="level-4-6"><img src="https://i.imgur.com/nkdMGk5.png" class="face"><input type="radio" name="pain" value="4">4</label>
+      <label class="level-4-6"><img src="https://i.imgur.com/nkdMGk5.png" class="face"><input type="radio" name="pain" value="5">5</label>
+      <label class="level-4-6"><img src="https://i.imgur.com/wfqRRGl.png" class="face"><input type="radio" name="pain" value="6">6</label>
+      <label class="level-7-10"><img src="https://i.imgur.com/wfqRRGl.png" class="face"><input type="radio" name="pain" value="7">7</label>
+      <label class="level-7-10"><img src="https://i.imgur.com/hBUpOWE.png" class="face"><input type="radio" name="pain" value="8">8</label>
+      <label class="level-7-10"><img src="https://i.imgur.com/hBUpOWE.png" class="face"><input type="radio" name="pain" value="9">9</label>
+      <label class="level-7-10"><img src="https://i.imgur.com/JBfHJBi.png" class="face"><input type="radio" name="pain" value="10">10</label>
+    </div>
+
+    <button class="toggle-btn" type="button" onclick="toggleSupplemental()">Papildoma informacija apie jūsų skausmą</button>
+    <div class="supplemental" id="supplemental-section">
+      <label>Kaip skausmas trukdė jūsų veiklai per paskutines 24 val.?</label>
+      <select name="activity">
+        <option value="0">0 - Neturėjo įtakos</option>
+        <option value="10">10 - Visiškai trukdė</option>
+      </select>
+      <label>Kaip skausmas paveikė jūsų miegą?</label>
+      <select name="sleep">
+        <option value="0">0 - Nepaveikė</option>
+        <option value="10">10 - Visiškai paveikė</option>
+      </select>
+      <label>Kaip skausmas paveikė jūsų nuotaiką?</label>
+      <select name="mood">
+        <option value="0">0 - Nepaveikė</option>
+        <option value="10">10 - Labai stipriai paveikė</option>
+      </select>
+      <label>Kaip skausmas prisidėjo prie jūsų streso lygio?</label>
+      <select name="stress">
+        <option value="0">0 - Neprisidėjo</option>
+        <option value="10">10 - Labai prisidėjo</option>
+      </select>
+    </div>
+
+    <br>
+    <button class="submit-btn" type="submit">Pateikti</button>
+  </form>
+
+  <script>
+    function toggleSupplemental() {
+      const section = document.getElementById('supplemental-section');
+      section.style.display = section.style.display === 'none' || section.style.display === '' ? 'block' : 'none';
+    }
+
+    function formatBedId(id) {
+      if (id && id.includes("-")) {
+        const [palata, lova] = id.split("-");
+        return palata + " palata " + lova + " lova";
+      }
+      return id;
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const urlParams = new URLSearchParams(window.location.search);
+      const bedId = urlParams.get("id") || "nežinoma";
+
+      document.getElementById("bed-label").innerHTML = "<strong>Lovos ID:</strong> " + formatBedId(bedId);
+
+      document.getElementById("pain-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+        const data = new FormData(this);
+        const jsonData = {};
+        data.forEach((value, key) => jsonData[key] = value);
+        jsonData.bedId = bedId;
+        jsonData.timestamp = new Date().toISOString();
+
+        fetch("https://script.google.com/macros/s/AKfycbw4cdh6miY0FPdhHUaR8CxaRNarh01J1rY_QhCN7A5TTvyDgcDED57jZOBGk0g-m05b_A/exec?" +
+          new URLSearchParams({
+            id: jsonData.bedId,
+            pain: jsonData.pain
+          }), {
+          method: "GET",
+          mode: "no-cors"
+        }).then(() => {
+          alert("Ačiū! Jūsų skausmo vertinimas išsiųstas.");
+        });
+      });
+    });
+  </script>
+</body>
+</html>
