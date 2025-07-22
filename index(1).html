@@ -1,0 +1,143 @@
+
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8">
+  <title>Skausmo vertinimo forma</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 1rem;
+      max-width: 700px;
+      margin: auto;
+    }
+    h2 {
+      color: #663399;
+    }
+    .pain-scale {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .pain-scale label {
+      flex: 1;
+      text-align: center;
+      font-size: 12px;
+    }
+    .pain-scale input[type="radio"] {
+      display: block;
+      margin: auto;
+    }
+    .face {
+      width: 30px;
+      display: block;
+      margin: auto;
+    }
+    .level-0-3 {
+      background-color: #b6e2a1;
+      border-radius: 6px;
+      padding: 5px;
+    }
+    .level-4-6 {
+      background-color: #fff5a1;
+      border-radius: 6px;
+      padding: 5px;
+    }
+    .level-7-10 {
+      background-color: #f8b4a1;
+      border-radius: 6px;
+      padding: 5px;
+    }
+    .submit-btn {
+      padding: 0.5rem 1rem;
+      background: #663399;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h2>Skausmo vertinimo forma</h2>
+
+  <p><strong>Lovos ID:</strong> <span id="bed-id">...</span></p>
+
+  <form id="pain-form">
+    <p><strong>Pasirinkite skausmo lygį nuo 0 (be skausmo) iki 10 (stipriausias skausmas):</strong></p>
+    <div class="pain-scale">
+      <label class="level-0-3">
+        <img src="https://i.imgur.com/jYkTP5R.png" class="face" alt="0">
+        <input type="radio" name="pain" value="0">0
+      </label>
+      <label class="level-0-3">
+        <img src="https://i.imgur.com/jYkTP5R.png" class="face" alt="1">
+        <input type="radio" name="pain" value="1">1
+      </label>
+      <label class="level-0-3">
+        <img src="https://i.imgur.com/kD0aMe1.png" class="face" alt="2">
+        <input type="radio" name="pain" value="2">2
+      </label>
+      <label class="level-0-3">
+        <img src="https://i.imgur.com/kD0aMe1.png" class="face" alt="3">
+        <input type="radio" name="pain" value="3">3
+      </label>
+      <label class="level-4-6">
+        <img src="https://i.imgur.com/nkdMGk5.png" class="face" alt="4">
+        <input type="radio" name="pain" value="4">4
+      </label>
+      <label class="level-4-6">
+        <img src="https://i.imgur.com/nkdMGk5.png" class="face" alt="5">
+        <input type="radio" name="pain" value="5">5
+      </label>
+      <label class="level-4-6">
+        <img src="https://i.imgur.com/wfqRRGl.png" class="face" alt="6">
+        <input type="radio" name="pain" value="6">6
+      </label>
+      <label class="level-7-10">
+        <img src="https://i.imgur.com/wfqRRGl.png" class="face" alt="7">
+        <input type="radio" name="pain" value="7">7
+      </label>
+      <label class="level-7-10">
+        <img src="https://i.imgur.com/hBUpOWE.png" class="face" alt="8">
+        <input type="radio" name="pain" value="8">8
+      </label>
+      <label class="level-7-10">
+        <img src="https://i.imgur.com/hBUpOWE.png" class="face" alt="9">
+        <input type="radio" name="pain" value="9">9
+      </label>
+      <label class="level-7-10">
+        <img src="https://i.imgur.com/JBfHJBi.png" class="face" alt="10">
+        <input type="radio" name="pain" value="10">10
+      </label>
+    </div>
+
+    <button class="submit-btn" type="submit">Pateikti</button>
+  </form>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const bedId = urlParams.get('id') || 'nežinoma';
+    document.getElementById('bed-id').innerText = bedId;
+
+    document.getElementById('pain-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const data = new FormData(this);
+      const jsonData = {};
+      data.forEach((value, key) => jsonData[key] = value);
+      jsonData.lova = bedId;
+      jsonData.timestamp = new Date().toISOString();
+
+      const scriptURL = 'https://script.google.com/macros/s/AKfycbw4cdh6miY0FPdhHUaR8CxaRNarh01J1rY_QhCN7A5TTvyDgcDED57jZOBGk0g-m05b_A/exec';
+      fetch(`${scriptURL}?id=${jsonData.lova}&pain=${jsonData.pain}&time=${jsonData.timestamp}`, {
+        method: 'GET'
+      })
+      .then(response => alert('Ačiū! Jūsų skausmo vertinimas išsaugotas.'))
+      .catch(error => alert('Klaida! Nepavyko išsaugoti duomenų.'));
+    });
+  </script>
+</body>
+</html>
