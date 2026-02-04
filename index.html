@@ -5,20 +5,17 @@
   <title>Skausmo vertinimo forma</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body{font-family:Arial,sans-serif;padding:1rem;max-width:820px;margin:auto}
+    body{font-family:Arial,sans-serif;padding:1rem;max-width:860px;margin:auto}
     h2{color:#663399;margin:0 0 .5rem}
     .muted{color:#555;font-size:14px;margin:.25rem 0 1rem}
     .card{border:1px solid #e6e6e6;border-radius:12px;padding:14px;margin:12px 0;background:#fff}
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .pill{display:inline-block;padding:4px 10px;border-radius:999px;font-size:13px;border:1px solid #ddd;background:#fafafa}
-    .btn{
-      padding:.65rem 1rem;border:none;border-radius:10px;font-size:16px;cursor:pointer;
-      background:#663399;color:white
-    }
+    .btn{padding:.65rem 1rem;border:none;border-radius:10px;font-size:16px;cursor:pointer;background:#663399;color:white}
     .btn.secondary{background:#f2f2f2;color:#111;border:1px solid #ddd}
     .btn.danger{background:#b00020}
     .btn:disabled{opacity:.55;cursor:not-allowed}
-    .note{font-size:14px;color:#222;line-height:1.35}
+    .note{font-size:14px;color:#222;line-height:1.4}
     ul{margin:.5rem 0 .25rem 1.1rem}
     .big{font-size:18px;font-weight:700;margin:0 0 .5rem}
     .ok{color:#1b5e20}
@@ -35,7 +32,7 @@
       gap:10px;
       margin:12px 0;
     }
-    @media(min-width:820px){
+    @media(min-width:860px){
       .dvprsGrid{ grid-template-columns:repeat(3,1fr); }
     }
     .dvprsCard{
@@ -46,7 +43,7 @@
       cursor:pointer;
       text-align:left;
       overflow:hidden;
-      min-height:118px;
+      min-height:120px;
     }
     .dvprsCard:active{ transform:scale(0.99); }
     .dvprsBar{
@@ -71,6 +68,14 @@
       outline:3px solid rgba(102,51,153,.35);
       border-color: rgba(102,51,153,.35);
     }
+
+    .sources{
+      margin-top:10px;
+      font-size:12px;
+      color:#555;
+      border-top:1px dashed #e6e6e6;
+      padding-top:8px;
+    }
   </style>
 </head>
 <body>
@@ -83,7 +88,7 @@
   <div id="step1" class="card">
     <p class="big">Pasirinkite skausmo lygį nuo 0 iki 10</p>
 
-    <!-- DVPRS kortelės bus sugeneruotos JS -->
+    <!-- DVPRS kortelės sugeneruojamos JS -->
     <div id="dvprsGrid" class="dvprsGrid"></div>
 
     <div class="center">
@@ -91,13 +96,13 @@
     </div>
   </div>
 
-  <!-- 2) Atsakas + alergija -->
+  <!-- 2) Atsakas + (vaistai -> alergija) -->
   <div id="step2" class="card hidden">
     <p class="big">Jūsų įvertinimas: <span id="painOut"></span>/10</p>
     <div id="adviceBox" class="note"></div>
 
-    <!-- tik jei 1-3 -->
-    <div id="medsBox" class="hidden" style="margin-top:10px">
+    <!-- tik jei 1–3 -->
+    <div id="medsBox" class="hidden" style="margin-top:12px">
       <p class="note"><strong>Jei vis tiek reikia:</strong></p>
       <button id="wantMedsBtn" class="btn danger" type="button">Noriu vaistų nuo skausmo</button>
       <p class="muted" id="medsStatus" style="margin-top:6px"></p>
@@ -105,20 +110,23 @@
 
     <hr style="border:none;border-top:1px solid #eee;margin:14px 0">
 
-    <p class="note">
-      <strong>Ar esate alergiškas/-a kokiems nors vaistams nuo skausmo?</strong>
-      <span class="muted">(pvz., ibuprofenui, ketoprofenui, paracetamoliui)</span>
-    </p>
+    <!-- Alergija rodoma TIK kai pacientas paspaudžia "Noriu vaistų" -->
+    <div id="allergyBlock" class="hidden">
+      <p class="note">
+        <strong>Ar esate alergiškas/-a kokiems nors vaistams nuo skausmo?</strong>
+        <span class="muted">(pvz., ibuprofenui, ketoprofenui, paracetamoliui)</span>
+      </p>
 
-    <div class="row" style="margin-top:8px">
-      <button class="btn secondary" id="allergyNo" type="button">Ne</button>
-      <button class="btn danger" id="allergyYes" type="button">Taip</button>
+      <div class="row" style="margin-top:8px">
+        <button class="btn secondary" id="allergyNo" type="button">Ne</button>
+        <button class="btn danger" id="allergyYes" type="button">Taip</button>
+      </div>
+
+      <p class="muted" id="allergyStatus" style="margin-top:10px"></p>
     </div>
 
-    <p class="muted" id="allergyStatus" style="margin-top:10px"></p>
-
     <div class="center" style="margin-top:12px">
-      <button id="submitBtn" class="btn" disabled>Pateikti įvertinimą</button>
+      <button id="submitBtn" class="btn">Pateikti įvertinimą</button>
     </div>
   </div>
 
@@ -129,19 +137,20 @@
   </div>
 
   <script>
-    // --- Konfigūracija ---
+    // === Konfigūracija ===
     const scriptURL = "https://script.google.com/macros/s/AKfycbw4cdh6miY0FPdhHUaR8CxaRNarh01J1rY_QhCN7A5TTvyDgcDED57jZOBGk0g-m05b_A/exec";
 
-    // --- Parametrai ---
+    // === Parametrai ===
     const urlParams = new URLSearchParams(window.location.search);
     const bedId = (urlParams.get("id") || "nežinoma").trim();
     document.getElementById("bed-id").innerText = bedId;
 
-    // --- Būsena ---
+    // === Būsena ===
     let selectedPain = null;
-    let wantMeds = false;
-    let allergy = null; // "YES" | "NO" | null
+    let wantMeds = false;   // pacientas paspaudė "noriu vaistų"
+    let allergy = null;     // "YES" | "NO" | null (tik jei wantMeds)
 
+    // === Elementai ===
     const toStep2Btn = document.getElementById("toStep2");
     const step1 = document.getElementById("step1");
     const step2 = document.getElementById("step2");
@@ -154,15 +163,15 @@
     const wantMedsBtn = document.getElementById("wantMedsBtn");
     const medsStatus = document.getElementById("medsStatus");
 
+    const allergyBlock = document.getElementById("allergyBlock");
     const allergyNo = document.getElementById("allergyNo");
     const allergyYes = document.getElementById("allergyYes");
     const allergyStatus = document.getElementById("allergyStatus");
 
     const submitBtn = document.getElementById("submitBtn");
 
-    // ===== DVPRS (pilnas žodinis aprašas kiekvienam 0–10) =====
-    // Pastaba: jei tavo slaugos plane tekstai šiek tiek kitokie (pvz. su diakritika ar formuluotėmis),
-    // pakeisk čia 1:1 — UI automatiškai atsinaujins.
+    // ===== DVPRS (veidukas + spalva + pilnas žodinis aprašas) =====
+    // Jei nori 1:1 su tavo slaugos plano tekstais – pakeisk čia tekstus identiškai.
     const dvprs = [
       { n: 0,  emoji:"😀", color:"#16a34a", text:"NERA SKAUSMO" },
 
@@ -183,8 +192,6 @@
 
     function renderDvprsGrid(){
       const grid = document.getElementById("dvprsGrid");
-      if(!grid) return;
-
       grid.innerHTML = dvprs.map(item => `
         <button type="button"
           class="dvprsCard"
@@ -193,7 +200,6 @@
           aria-label="Skausmo lygis ${item.n} iš 10"
         >
           <div class="dvprsBar"></div>
-
           <div class="dvprsTop">
             <div class="dvprsLeft">
               <div class="dvprsEmoji" aria-hidden="true">${item.emoji}</div>
@@ -201,7 +207,6 @@
             </div>
             <div class="dvprsTag">${item.n}/10</div>
           </div>
-
           <div class="dvprsText">${item.text}</div>
         </button>
       `).join("");
@@ -220,32 +225,36 @@
       });
     }
 
-    // Inicializacija
     renderDvprsGrid();
 
+    // === ėjimas į 2 žingsnį ===
     toStep2Btn.addEventListener("click", () => {
       if (selectedPain === null || Number.isNaN(selectedPain)) return;
       showStep2();
     });
 
-    function showStep2() {
+    function showStep2(){
       step1.classList.add("hidden");
       step2.classList.remove("hidden");
 
       painOut.textContent = selectedPain;
 
-      // reset alergija
-      allergy = null;
-      allergyStatus.textContent = "";
-      submitBtn.disabled = true;
-
       // reset meds
       wantMeds = false;
       medsStatus.textContent = "";
+      allergyBlock.classList.add("hidden");
 
-      // patarimai pagal slaugos plano kategorijas:
+      // reset alergija
+      allergy = null;
+      allergyStatus.textContent = "";
+
+      // submit leidžiam visada (įvertinimą galima pateikti ir be vaistų)
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Pateikti įvertinimą";
+
+      // rekomendacijos pagal slaugos plano kriterijus:
       // 0 – nėra; 1–3 – nedidelis; 4–6 – vidutinis; 7–10 – didelis
-      if (selectedPain === 0) {
+      if(selectedPain === 0){
         adviceBox.innerHTML = `
           <div class="ok"><strong>Skausmo nėra.</strong></div>
           <div class="note" style="margin-top:6px">
@@ -254,25 +263,34 @@
         `;
         medsBox.classList.add("hidden");
       }
-      else if (selectedPain >= 1 && selectedPain <= 3) {
+      else if(selectedPain >= 1 && selectedPain <= 3){
         adviceBox.innerHTML = `
           <div class="ok"><strong>Nedidelis skausmas.</strong></div>
-          <div class="note" style="margin-top:6px">
-            Galite pabandyti nefarmakologines priemones:
+
+          <div class="note" style="margin-top:8px">
+            Galite pabandyti nefarmakologines priemones, kurios dažnai padeda sumažinti diskomfortą:
             <ul>
-              <li>Patogesnė padėtis / pagalvėlių korekcija</li>
-              <li>Ramus kvėpavimas, atsipalaidavimas</li>
-              <li>Dėmesio nukreipimas (muzika, TV, pokalbis)</li>
+              <li><strong>Patogi padėtis:</strong> pakeiskite kūno padėtį, pasirūpinkite atrama ar pagalvėle.</li>
+              <li><strong>Ramus kvėpavimas:</strong> lėtai ir giliai kvėpuokite, stenkitės atsipalaiduoti.</li>
+              <li><strong>Dėmesio nukreipimas:</strong> muzika, pokalbis, televizija ar kita rami veikla gali sumažinti skausmo pojūtį.</li>
+              <li><strong>Poilsis:</strong> trumpas poilsis dažnai padeda organizmui atsistatyti.</li>
+              <li><strong>Švelnus judėjimas:</strong> jei leidžiama, lengvas pasijudinimas ar pozos pakeitimas gali sumažinti sustingimą.</li>
+              <li><strong>Šiluma arba vėsa:</strong> kai kuriais atvejais gali padėti šilumos ar šalčio pojūtis (tik jei jums tinka ir yra leidžiama).</li>
+              <li><strong>Rami aplinka:</strong> mažiau triukšmo, pritemdyta šviesa ir komfortiška temperatūra padeda atsipalaiduoti.</li>
             </ul>
+
+            <div class="sources">
+              Šaltiniai: WHO (World Health Organization) rekomendacijos dėl skausmo valdymo; NICE rekomendacijos dėl skausmo valdymo; APS (American Pain Society) – nefarmakologinės priemonės skausmui mažinti.
+            </div>
           </div>
         `;
         medsBox.classList.remove("hidden");
       }
-      else if (selectedPain >= 4 && selectedPain <= 6) {
+      else if(selectedPain >= 4 && selectedPain <= 6){
         adviceBox.innerHTML = `
           <div class="warn"><strong>Vidutinis skausmas.</strong></div>
           <div class="note" style="margin-top:6px">
-            Įvertinimas pateiktas. Slaugytoja turėtų ne už ilgo ateiti.
+            Įvertinimas pateiktas. Slaugytoja turėtų ateiti.
             <br><br>
             Jei skausmas nemažėja arba slaugytoja neateina per <strong>~15 min</strong>,
             spauskite palatos iškvietimo mygtuką arba ateikite į slaugytojų postą.
@@ -294,13 +312,24 @@
       }
     }
 
-    // --- 1-3: noriu vaistų ---
+    // === 1–3: "noriu vaistų" -> parodom alergiją ir padarom ją privalomą ===
     wantMedsBtn.addEventListener("click", () => {
       wantMeds = true;
       medsStatus.textContent = "Pažymėta: pageidaujate farmakologinio skausmo malšinimo.";
+
+      // Parodom alergijos bloką
+      allergyBlock.classList.remove("hidden");
+
+      // Dabar prieš pateikimą privaloma pasirinkti alergiją
+      allergy = null;
+      allergyStatus.textContent = "";
+      submitBtn.disabled = true;
+
+      // Nuslenkam, kad pacientas iškart pamatytų
+      allergyBlock.scrollIntoView({ behavior: "smooth", block: "start" });
     });
 
-    // --- Alergija ---
+    // === Alergija (tik kai atidarytas allergyBlock) ===
     allergyNo.addEventListener("click", () => {
       allergy = "NO";
       allergyStatus.textContent = "Pažymėta: alergijos nėra.";
@@ -315,10 +344,15 @@
       submitBtn.disabled = false;
     });
 
-    // --- Siuntimas ---
+    // === Siuntimas ===
     submitBtn.addEventListener("click", async () => {
       if (selectedPain === null || Number.isNaN(selectedPain)) return;
-      if (!allergy) return;
+
+      // Alergija privaloma tik jei pacientas paspaudė "noriu vaistų"
+      if (wantMeds && !allergy) {
+        alert("Prašome pažymėti, ar turite alergiją vaistams.");
+        return;
+      }
 
       submitBtn.disabled = true;
       submitBtn.textContent = "Siunčiama...";
@@ -329,8 +363,8 @@
         id: bedId,
         pain: String(selectedPain),
         time: timestamp,
-        allergy: allergy,          // YES / NO
-        meds: wantMeds ? "YES" : "NO"
+        meds: wantMeds ? "YES" : "NO",
+        allergy: wantMeds ? allergy : "NA" // NA = neaktualu (neprašė vaistų)
       });
 
       try {
