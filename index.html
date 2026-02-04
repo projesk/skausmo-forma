@@ -2,72 +2,51 @@
 <!DOCTYPE html>
 <html lang="lt">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Skausmo vertinimo forma</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 1rem;
-      max-width: 700px;
-      margin: auto;
+    body{font-family:Arial,sans-serif;padding:1rem;max-width:720px;margin:auto}
+    h2{color:#663399;margin:0 0 .5rem}
+    .muted{color:#555;font-size:14px;margin:.25rem 0 1rem}
+    .card{border:1px solid #e6e6e6;border-radius:12px;padding:14px;margin:12px 0;background:#fff}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .pill{display:inline-block;padding:4px 10px;border-radius:999px;font-size:13px;border:1px solid #ddd;background:#fafafa}
+    .pain-scale{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:12px 0}
+    .pain-scale label{flex:0 0 62px;text-align:center;font-size:14px;padding:10px;border-radius:10px;border:1px solid rgba(0,0,0,.06);user-select:none;cursor:pointer}
+    .pain-scale input{margin-top:6px}
+    .face{font-size:20px;display:block}
+    .level-0-3{background:#b6e2a1}
+    .level-4-6{background:#fff5a1}
+    .level-7-9{background:#f8b4a1}
+    .level-10{background:#f36b6b}
+    .btn{
+      padding:.65rem 1rem;border:none;border-radius:10px;font-size:16px;cursor:pointer;
+      background:#663399;color:white
     }
-    h2 {
-      color: #663399;
-    }
-    .pain-scale {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-      margin-bottom: 1rem;
-    }
-    .pain-scale label {
-      flex: 0 0 60px;
-      text-align: center;
-      font-size: 14px;
-      padding: 10px;
-      border-radius: 6px;
-    }
-    .pain-scale input[type="radio"] {
-      margin-top: 5px;
-    }
-    .face {
-      font-size: 20px;
-      display: block;
-    }
-    .level-0-3 {
-      background-color: #b6e2a1;
-    }
-    .level-4-6 {
-      background-color: #fff5a1;
-    }
-    .level-7-9 {
-      background-color: #f8b4a1;
-    }
-    .level-10 {
-      background-color: #f36b6b;
-    }
-    .submit-btn {
-      padding: 0.5rem 1rem;
-      background: #663399;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      cursor: pointer;
-      margin-top: 1rem;
-    }
+    .btn.secondary{background:#f2f2f2;color:#111;border:1px solid #ddd}
+    .btn.danger{background:#b00020}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+    .note{font-size:14px;color:#222;line-height:1.35}
+    ul{margin:.5rem 0 .25rem 1.1rem}
+    .big{font-size:18px;font-weight:700;margin:0 0 .5rem}
+    .ok{color:#1b5e20}
+    .warn{color:#8a6d00}
+    .bad{color:#8b0000}
+    .center{text-align:center}
+    .hidden{display:none !important}
   </style>
 </head>
 <body>
   <h2>Skausmo vertinimo forma</h2>
+  <p class="muted">
+    <span class="pill"><strong>Lova:</strong> <span id="bed-id">...</span></span>
+  </p>
 
-  <p><strong>Lovos ID:</strong> <span id="bed-id">...</span></p>
-
-  <form id="pain-form">
-    <p><strong>Pasirinkite skausmo lygį nuo 0 iki 10:</strong></p>
-    <div class="pain-scale">
+  <!-- 1) Pasirinkimas -->
+  <div id="step1" class="card">
+    <p class="big">Pasirinkite skausmo lygį nuo 0 iki 10</p>
+    <div class="pain-scale" id="pain-scale">
       <label class="level-0-3"><span class="face">😊</span><input type="radio" name="pain" value="0">0</label>
       <label class="level-0-3"><span class="face">🙂</span><input type="radio" name="pain" value="1">1</label>
       <label class="level-0-3"><span class="face">🙂</span><input type="radio" name="pain" value="2">2</label>
@@ -81,32 +60,197 @@
       <label class="level-10"><span class="face">🆘</span><input type="radio" name="pain" value="10">10</label>
     </div>
 
-    <button class="submit-btn" type="submit">Pateikti</button>
-  </form>
+    <div class="center">
+      <button id="toStep2" class="btn" disabled>Toliau</button>
+    </div>
+  </div>
+
+  <!-- 2) Atsakas + alergija -->
+  <div id="step2" class="card hidden">
+    <p class="big">Jūsų įvertinimas: <span id="painOut"></span>/10</p>
+    <div id="adviceBox" class="note"></div>
+
+    <!-- tik jei 0-3 -->
+    <div id="medsBox" class="hidden" style="margin-top:10px">
+      <p class="note"><strong>Jei vis tiek reikia:</strong></p>
+      <button id="wantMedsBtn" class="btn danger" type="button">Noriu vaistų nuo skausmo</button>
+      <p class="muted" id="medsStatus" style="margin-top:6px"></p>
+    </div>
+
+    <hr style="border:none;border-top:1px solid #eee;margin:14px 0">
+
+    <p class="note">
+      <strong>Ar esate alergiškas/-a kokiems nors vaistams nuo skausmo?</strong>
+      <span class="muted">(pvz., ibuprofenui, ketoprofenui, paracetamoliui)</span>
+    </p>
+
+    <div class="row" style="margin-top:8px">
+      <button class="btn secondary" id="allergyNo" type="button">Ne</button>
+      <button class="btn danger" id="allergyYes" type="button">Taip</button>
+    </div>
+
+    <p class="muted" id="allergyStatus" style="margin-top:10px"></p>
+
+    <div class="center" style="margin-top:12px">
+      <button id="submitBtn" class="btn" disabled>Pateikti įvertinimą</button>
+    </div>
+  </div>
+
+  <!-- 3) Pabaiga -->
+  <div id="step3" class="card hidden center">
+    <p class="big ok">Ačiū! Įvertinimas išsaugotas.</p>
+    <p class="note">Galite uždaryti šį langą.</p>
+  </div>
 
   <script>
+    // --- Konfigūracija ---
+    const scriptURL = "https://script.google.com/macros/s/AKfycbw4cdh6miY0FPdhHUaR8CxaRNarh01J1rY_QhCN7A5TTvyDgcDED57jZOBGk0g-m05b_A/exec";
+
+    // --- Parametrai ---
     const urlParams = new URLSearchParams(window.location.search);
-    const bedId = urlParams.get('id') || 'nežinoma';
-    document.getElementById('bed-id').innerText = bedId;
+    const bedId = (urlParams.get("id") || "nežinoma").trim();
+    document.getElementById("bed-id").innerText = bedId;
 
-    document.getElementById('pain-form').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const data = new FormData(this);
-      const jsonData = {};
-      data.forEach((value, key) => jsonData[key] = value);
-      jsonData.lova = bedId;
-      jsonData.timestamp = new Date().toISOString();
+    // --- Būsena ---
+    let selectedPain = null;
+    let wantMeds = false;
+    let allergy = null; // "YES" | "NO" | null
 
-      const scriptURL = 'https://script.google.com/macros/s/AKfycbw4cdh6miY0FPdhHUaR8CxaRNarh01J1rY_QhCN7A5TTvyDgcDED57jZOBGk0g-m05b_A/exec';
-      fetch(`${scriptURL}?id=${jsonData.lova}&pain=${jsonData.pain}&time=${jsonData.timestamp}`, {
-        method: 'GET'
-      })
-      .then(response => {
-        alert('Ačiū! Jūsų skausmo vertinimas išsaugotas.');
-        window.close();
-        window.location.href = "about:blank";
-      })
-      .catch(error => alert('Klaida! Nepavyko išsaugoti duomenų.'));
+    const toStep2Btn = document.getElementById("toStep2");
+    const step1 = document.getElementById("step1");
+    const step2 = document.getElementById("step2");
+    const step3 = document.getElementById("step3");
+
+    const painOut = document.getElementById("painOut");
+    const adviceBox = document.getElementById("adviceBox");
+
+    const medsBox = document.getElementById("medsBox");
+    const wantMedsBtn = document.getElementById("wantMedsBtn");
+    const medsStatus = document.getElementById("medsStatus");
+
+    const allergyNo = document.getElementById("allergyNo");
+    const allergyYes = document.getElementById("allergyYes");
+    const allergyStatus = document.getElementById("allergyStatus");
+
+    const submitBtn = document.getElementById("submitBtn");
+
+    // --- 1) pasirinktas skausmas ---
+    document.getElementById("pain-scale").addEventListener("change", (e) => {
+      if (e.target && e.target.name === "pain") {
+        selectedPain = parseInt(e.target.value, 10);
+        toStep2Btn.disabled = Number.isNaN(selectedPain);
+      }
+    });
+
+    toStep2Btn.addEventListener("click", () => {
+      if (selectedPain === null || Number.isNaN(selectedPain)) return;
+      showStep2();
+    });
+
+    function showStep2() {
+      step1.classList.add("hidden");
+      step2.classList.remove("hidden");
+
+      painOut.textContent = selectedPain;
+
+      // reset alergija / mygtukai kiekvienam kartui
+      allergy = null;
+      allergyStatus.textContent = "";
+      submitBtn.disabled = true;
+      allergyNo.classList.remove("danger");
+      allergyYes.classList.remove("danger");
+
+      // reset meds
+      wantMeds = false;
+      medsStatus.textContent = "";
+
+      // patarimai pagal lygį
+      if (selectedPain <= 3) {
+        adviceBox.innerHTML = `
+          <div class="ok"><strong>Nedidelis skausmas.</strong></div>
+          <div class="note" style="margin-top:6px">
+            Galite pabandyti nefarmakologines priemones:
+            <ul>
+              <li>Patogesnė padėtis / pagalvėlių korekcija</li>
+              <li>Ramus kvėpavimas, atsipalaidavimas</li>
+              <li>Dėmesio nukreipimas (muzika, TV, pokalbis)</li>
+            </ul>
+          </div>
+        `;
+        medsBox.classList.remove("hidden");
+      } else if (selectedPain <= 6) {
+        adviceBox.innerHTML = `
+          <div class="warn"><strong>Vidutinis skausmas.</strong></div>
+          <div class="note" style="margin-top:6px">
+            Įvertinimas pateiktas. Slaugytoja turėtų ateiti.
+            <br><br>
+            Jei skausmas nemažėja arba slaugytoja neateina per <strong>~15 min</strong>,
+            spauskite palatos iškvietimo mygtuką arba ateikite į slaugytojų postą.
+          </div>
+        `;
+        medsBox.classList.add("hidden");
+      } else {
+        adviceBox.innerHTML = `
+          <div class="bad"><strong>Didelis skausmas.</strong></div>
+          <div class="note" style="margin-top:6px">
+            Įvertinimas pateiktas. Slaugytoja turėtų ateiti <strong>kuo greičiau</strong>.
+            <br><br>
+            Jei slaugytoja neateina per <strong>~10 min</strong>, spauskite palatos iškvietimo mygtuką
+            arba ateikite į slaugytojų postą.
+          </div>
+        `;
+        medsBox.classList.add("hidden");
+      }
+    }
+
+    // --- 0-3: noriu vaistų ---
+    wantMedsBtn.addEventListener("click", () => {
+      wantMeds = true;
+      medsStatus.textContent = "Pažymėta: pageidaujate farmakologinio skausmo malšinimo.";
+    });
+
+    // --- Alergija ---
+    allergyNo.addEventListener("click", () => {
+      allergy = "NO";
+      allergyStatus.textContent = "Pažymėta: alergijos nėra.";
+      submitBtn.disabled = false;
+    });
+
+    allergyYes.addEventListener("click", () => {
+      allergy = "YES";
+      allergyStatus.textContent = "Pažymėta: yra alergija (slaugytoja išsiaiškins detales atėjusi).";
+      submitBtn.disabled = false;
+    });
+
+    // --- Siuntimas ---
+    submitBtn.addEventListener("click", async () => {
+      if (selectedPain === null || Number.isNaN(selectedPain)) return;
+      if (!allergy) return;
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Siunčiama...";
+
+      const timestamp = new Date().toISOString();
+
+      // Išsiunčiam GET (kaip pas tave buvo), pridedam papildomus laukus.
+      const qs = new URLSearchParams({
+        id: bedId,
+        pain: String(selectedPain),
+        time: timestamp,
+        allergy: allergy,          // YES / NO
+        meds: wantMeds ? "YES" : "NO"
+      });
+
+      try {
+        await fetch(`${scriptURL}?${qs.toString()}`, { method: "GET" });
+
+        step2.classList.add("hidden");
+        step3.classList.remove("hidden");
+      } catch (err) {
+        alert("Klaida! Nepavyko išsaugoti duomenų. Pabandykite dar kartą.");
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Pateikti įvertinimą";
+      }
     });
   </script>
 </body>
