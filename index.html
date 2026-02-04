@@ -24,7 +24,7 @@
     .center{text-align:center}
     .hidden{display:none !important}
 
-    /* ===== DVPRS GRID (veidukas + spalva + žodinis aprašas) ===== */
+    /* ===== DVPRS GRID (veidukas + spalva + pilnas žodinis aprašas) ===== */
     .dvprsGrid{
       padding:6px;
       display:grid;
@@ -87,30 +87,35 @@
   <!-- 1) Pasirinkimas -->
   <div id="step1" class="card">
     <p class="big">Pasirinkite skausmo lygį nuo 0 iki 10</p>
-
-    <!-- DVPRS kortelės sugeneruojamos JS -->
     <div id="dvprsGrid" class="dvprsGrid"></div>
-
     <div class="center">
       <button id="toStep2" class="btn" disabled>Toliau</button>
     </div>
   </div>
 
-  <!-- 2) Atsakas + (vaistai -> alergija) -->
+  <!-- 2) Atsakas + vaistai + alergija -->
   <div id="step2" class="card hidden">
     <p class="big">Jūsų įvertinimas: <span id="painOut"></span>/10</p>
     <div id="adviceBox" class="note"></div>
 
-    <!-- tik jei 1–3 -->
+    <!-- 1–3: iš pradžių rodom tik šį mygtuką -->
+    <div id="revealMedsWrap" class="hidden" style="margin-top:12px">
+      <button id="revealMedsBtn" class="btn danger" type="button">Man reikia vaistų nuo skausmo</button>
+      <p class="muted" style="margin-top:6px">
+        Paspaudus galėsite pateikti prašymą slaugytojai.
+      </p>
+    </div>
+
+    <!-- nuo 4 balų rodom iškart, o 1–3 atveju rodom tik po revealMedsBtn -->
     <div id="medsBox" class="hidden" style="margin-top:12px">
-      <p class="note"><strong>Jei vis tiek reikia:</strong></p>
+      <p class="note"><strong>Jei norite vaistų nuo skausmo:</strong></p>
       <button id="wantMedsBtn" class="btn danger" type="button">Noriu vaistų nuo skausmo</button>
       <p class="muted" id="medsStatus" style="margin-top:6px"></p>
     </div>
 
     <hr style="border:none;border-top:1px solid #eee;margin:14px 0">
 
-    <!-- Alergija rodoma TIK kai pacientas paspaudžia "Noriu vaistų" -->
+    <!-- Alergija rodoma tik po paspaudimo "Noriu vaistų" -->
     <div id="allergyBlock" class="hidden">
       <p class="note">
         <strong>Ar esate alergiškas/-a kokiems nors vaistams nuo skausmo?</strong>
@@ -147,7 +152,7 @@
 
     // === Būsena ===
     let selectedPain = null;
-    let wantMeds = false;   // pacientas paspaudė "noriu vaistų"
+    let wantMeds = false;   // pacientas paspaudė "Noriu vaistų"
     let allergy = null;     // "YES" | "NO" | null (tik jei wantMeds)
 
     // === Elementai ===
@@ -158,6 +163,9 @@
 
     const painOut = document.getElementById("painOut");
     const adviceBox = document.getElementById("adviceBox");
+
+    const revealMedsWrap = document.getElementById("revealMedsWrap");
+    const revealMedsBtn  = document.getElementById("revealMedsBtn");
 
     const medsBox = document.getElementById("medsBox");
     const wantMedsBtn = document.getElementById("wantMedsBtn");
@@ -171,7 +179,6 @@
     const submitBtn = document.getElementById("submitBtn");
 
     // ===== DVPRS (veidukas + spalva + pilnas žodinis aprašas) =====
-    // Jei nori 1:1 su tavo slaugos plano tekstais – pakeisk čia tekstus identiškai.
     const dvprs = [
       { n: 0,  emoji:"😀", color:"#16a34a", text:"NERA SKAUSMO" },
 
@@ -239,13 +246,16 @@
 
       painOut.textContent = selectedPain;
 
-      // reset meds
-      wantMeds = false;
-      medsStatus.textContent = "";
+      // reset UI
+      medsBox.classList.add("hidden");
+      revealMedsWrap.classList.add("hidden");
       allergyBlock.classList.add("hidden");
 
-      // reset alergija
+      // reset būsena
+      wantMeds = false;
       allergy = null;
+
+      medsStatus.textContent = "";
       allergyStatus.textContent = "";
 
       // submit leidžiam visada (įvertinimą galima pateikti ir be vaistų)
@@ -261,7 +271,6 @@
             Ačiū. Jei situacija pasikeistų – įvertinkite skausmą dar kartą.
           </div>
         `;
-        medsBox.classList.add("hidden");
       }
       else if(selectedPain >= 1 && selectedPain <= 3){
         adviceBox.innerHTML = `
@@ -280,11 +289,13 @@
             </ul>
 
             <div class="sources">
-              Šaltiniai: WHO (World Health Organization) rekomendacijos dėl skausmo valdymo; NICE rekomendacijos dėl skausmo valdymo; APS (American Pain Society) – nefarmakologinės priemonės skausmui mažinti.
+              Šaltiniai: WHO rekomendacijos dėl skausmo valdymo; NICE rekomendacijos dėl skausmo valdymo; American Pain Society – nefarmakologinės priemonės skausmui mažinti.
             </div>
           </div>
         `;
-        medsBox.classList.remove("hidden");
+
+        // 1–3: rodome tik "Man reikia vaistų..." (medsBox dar slepiam)
+        revealMedsWrap.classList.remove("hidden");
       }
       else if(selectedPain >= 4 && selectedPain <= 6){
         adviceBox.innerHTML = `
@@ -296,7 +307,9 @@
             spauskite palatos iškvietimo mygtuką arba ateikite į slaugytojų postą.
           </div>
         `;
-        medsBox.classList.add("hidden");
+
+        // nuo 4 balų: medsBox rodom iškart
+        medsBox.classList.remove("hidden");
       }
       else { // 7–10
         adviceBox.innerHTML = `
@@ -308,28 +321,34 @@
             arba ateikite į slaugytojų postą.
           </div>
         `;
-        medsBox.classList.add("hidden");
+
+        // nuo 4 balų: medsBox rodom iškart
+        medsBox.classList.remove("hidden");
       }
     }
 
-    // === 1–3: "noriu vaistų" -> parodom alergiją ir padarom ją privalomą ===
+    // === 1–3: paspaudus "Man reikia vaistų..." parodom medsBox ===
+    revealMedsBtn.addEventListener("click", () => {
+      medsBox.classList.remove("hidden");
+      revealMedsWrap.classList.add("hidden");
+      medsBox.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    // === Paspaudus "Noriu vaistų" -> parodom alergiją ir padarom ją privalomą ===
     wantMedsBtn.addEventListener("click", () => {
       wantMeds = true;
       medsStatus.textContent = "Pažymėta: pageidaujate farmakologinio skausmo malšinimo.";
 
-      // Parodom alergijos bloką
       allergyBlock.classList.remove("hidden");
 
-      // Dabar prieš pateikimą privaloma pasirinkti alergiją
       allergy = null;
       allergyStatus.textContent = "";
       submitBtn.disabled = true;
 
-      // Nuslenkam, kad pacientas iškart pamatytų
       allergyBlock.scrollIntoView({ behavior: "smooth", block: "start" });
     });
 
-    // === Alergija (tik kai atidarytas allergyBlock) ===
+    // === Alergija ===
     allergyNo.addEventListener("click", () => {
       allergy = "NO";
       allergyStatus.textContent = "Pažymėta: alergijos nėra.";
@@ -348,7 +367,7 @@
     submitBtn.addEventListener("click", async () => {
       if (selectedPain === null || Number.isNaN(selectedPain)) return;
 
-      // Alergija privaloma tik jei pacientas paspaudė "noriu vaistų"
+      // Alergija privaloma tik jei paspaudė "Noriu vaistų"
       if (wantMeds && !allergy) {
         alert("Prašome pažymėti, ar turite alergiją vaistams.");
         return;
