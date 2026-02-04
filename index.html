@@ -98,15 +98,15 @@
     <p class="big">Jūsų įvertinimas: <span id="painOut"></span>/10</p>
     <div id="adviceBox" class="note"></div>
 
-    <!-- 1–3: iš pradžių rodom tik šį mygtuką -->
+    <!-- 1–3: rodom vieną mygtuką, kuris IŠKART pradeda vaistų prašymo srautą (parodo alergiją) -->
     <div id="revealMedsWrap" class="hidden" style="margin-top:12px">
-      <button id="revealMedsBtn" class="btn danger" type="button">Man reikia vaistų nuo skausmo</button>
+      <button id="revealMedsBtn" class="btn danger" type="button">Noriu vaistų nuo skausmo</button>
       <p class="muted" style="margin-top:6px">
-        Paspaudus galėsite pateikti prašymą slaugytojai.
+        Paspaudus, galėsite nurodyti, ar turite alergiją vaistams.
       </p>
     </div>
 
-    <!-- nuo 4 balų rodom iškart, o 1–3 atveju rodom tik po revealMedsBtn -->
+    <!-- nuo 4 balų rodom iškart -->
     <div id="medsBox" class="hidden" style="margin-top:12px">
       <p class="note"><strong>Jei norite vaistų nuo skausmo:</strong></p>
       <button id="wantMedsBtn" class="btn danger" type="button">Noriu vaistų nuo skausmo</button>
@@ -115,7 +115,7 @@
 
     <hr style="border:none;border-top:1px solid #eee;margin:14px 0">
 
-    <!-- Alergija rodoma tik po paspaudimo "Noriu vaistų" -->
+    <!-- Alergija rodoma tik pradėjus vaistų prašymo srautą -->
     <div id="allergyBlock" class="hidden">
       <p class="note">
         <strong>Ar esate alergiškas/-a kokiems nors vaistams nuo skausmo?</strong>
@@ -152,8 +152,8 @@
 
     // === Būsena ===
     let selectedPain = null;
-    let wantMeds = false;   // pacientas paspaudė "Noriu vaistų"
-    let allergy = null;     // "YES" | "NO" | null (tik jei wantMeds)
+    let wantMeds = false;   // pacientas pradėjo vaistų prašymo srautą
+    let allergy = null;     // "YES" | "NO" | null (privaloma, jei wantMeds=true)
 
     // === Elementai ===
     const toStep2Btn = document.getElementById("toStep2");
@@ -234,6 +234,20 @@
 
     renderDvprsGrid();
 
+    // === helper: pradėti vaistų prašymo srautą (rodo alergiją) ===
+    function startMedsRequest(){
+      wantMeds = true;
+      medsStatus.textContent = "Pažymėta: pageidaujate farmakologinio skausmo malšinimo.";
+
+      allergyBlock.classList.remove("hidden");
+
+      allergy = null;
+      allergyStatus.textContent = "";
+      submitBtn.disabled = true;
+
+      allergyBlock.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
     // === ėjimas į 2 žingsnį ===
     toStep2Btn.addEventListener("click", () => {
       if (selectedPain === null || Number.isNaN(selectedPain)) return;
@@ -258,11 +272,10 @@
       medsStatus.textContent = "";
       allergyStatus.textContent = "";
 
-      // submit leidžiam visada (įvertinimą galima pateikti ir be vaistų)
+      // submit leidžiam visada (jei nepasirinks vaistų)
       submitBtn.disabled = false;
       submitBtn.textContent = "Pateikti įvertinimą";
 
-      // rekomendacijos pagal slaugos plano kriterijus:
       // 0 – nėra; 1–3 – nedidelis; 4–6 – vidutinis; 7–10 – didelis
       if(selectedPain === 0){
         adviceBox.innerHTML = `
@@ -294,7 +307,7 @@
           </div>
         `;
 
-        // 1–3: rodome tik "Man reikia vaistų..." (medsBox dar slepiam)
+        // 1–3: rodom tik vieną mygtuką (jis iškart parodys alergiją)
         revealMedsWrap.classList.remove("hidden");
       }
       else if(selectedPain >= 4 && selectedPain <= 6){
@@ -307,11 +320,9 @@
             spauskite palatos iškvietimo mygtuką arba ateikite į slaugytojų postą.
           </div>
         `;
-
-        // nuo 4 balų: medsBox rodom iškart
         medsBox.classList.remove("hidden");
       }
-      else { // 7–10
+      else {
         adviceBox.innerHTML = `
           <div class="bad"><strong>Didelis skausmas.</strong></div>
           <div class="note" style="margin-top:6px">
@@ -321,32 +332,24 @@
             arba ateikite į slaugytojų postą.
           </div>
         `;
-
-        // nuo 4 balų: medsBox rodom iškart
         medsBox.classList.remove("hidden");
       }
     }
 
-    // === 1–3: paspaudus "Man reikia vaistų..." parodom medsBox ===
+    // === 1–3: vienas paspaudimas -> startMedsRequest() (parodo alergiją) ===
     revealMedsBtn.addEventListener("click", () => {
+      // (nebūtina, bet parodom statusą)
       medsBox.classList.remove("hidden");
-      revealMedsWrap.classList.add("hidden");
-      medsBox.scrollIntoView({ behavior: "smooth", block: "start" });
+
+      // paslepiam antrą mygtuką, kad nereikėtų spausti dar kartą
+      wantMedsBtn.classList.add("hidden");
+
+      // pradėti srautą
+      startMedsRequest();
     });
 
-    // === Paspaudus "Noriu vaistų" -> parodom alergiją ir padarom ją privalomą ===
-    wantMedsBtn.addEventListener("click", () => {
-      wantMeds = true;
-      medsStatus.textContent = "Pažymėta: pageidaujate farmakologinio skausmo malšinimo.";
-
-      allergyBlock.classList.remove("hidden");
-
-      allergy = null;
-      allergyStatus.textContent = "";
-      submitBtn.disabled = true;
-
-      allergyBlock.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
+    // === 4–10: "Noriu vaistų" mygtukas ===
+    wantMedsBtn.addEventListener("click", startMedsRequest);
 
     // === Alergija ===
     allergyNo.addEventListener("click", () => {
@@ -367,7 +370,7 @@
     submitBtn.addEventListener("click", async () => {
       if (selectedPain === null || Number.isNaN(selectedPain)) return;
 
-      // Alergija privaloma tik jei paspaudė "Noriu vaistų"
+      // Jei pacientas prašo vaistų, alergija privaloma
       if (wantMeds && !allergy) {
         alert("Prašome pažymėti, ar turite alergiją vaistams.");
         return;
@@ -383,7 +386,7 @@
         pain: String(selectedPain),
         time: timestamp,
         meds: wantMeds ? "YES" : "NO",
-        allergy: wantMeds ? allergy : "NA" // NA = neaktualu (neprašė vaistų)
+        allergy: wantMeds ? allergy : "NA"
       });
 
       try {
