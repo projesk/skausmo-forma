@@ -216,10 +216,12 @@
       submitBtn.disabled = false;
     });
 
-    allergyYes.addEventListener("click", () => {
-      allergy = "YES";
-      allergyStatus.textContent = "Pažymėta: yra alergija (slaugytoja išsiaiškins detales atėjusi).";
-      submitBtn.disabled = false;
+  allergyYes.addEventListener("click", () => {
+  allergy = "YES";
+  allergyStatus.innerHTML =
+    "<strong style='color:#8b0000'>Ačiū už informaciją.</strong> " +
+    "Būtinai slaugytojai pasakykite, kokiems vaistams turite alergiją.";
+  submitBtn.disabled = false;
     });
 
     // --- Siuntimas ---
