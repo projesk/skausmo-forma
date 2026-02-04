@@ -165,42 +165,53 @@
       medsStatus.textContent = "";
 
       // patarimai pagal lygį
-      if (selectedPain <= 3) {
-        adviceBox.innerHTML = `
-          <div class="ok"><strong>Nedidelis skausmas.</strong></div>
-          <div class="note" style="margin-top:6px">
-            Galite pabandyti nefarmakologines priemones:
-            <ul>
-              <li>Patogesnė padėtis / pagalvėlių korekcija</li>
-              <li>Ramus kvėpavimas, atsipalaidavimas</li>
-              <li>Dėmesio nukreipimas (muzika, TV, pokalbis)</li>
-            </ul>
-          </div>
-        `;
-        medsBox.classList.remove("hidden");
-      } else if (selectedPain <= 6) {
-        adviceBox.innerHTML = `
-          <div class="warn"><strong>Vidutinis skausmas.</strong></div>
-          <div class="note" style="margin-top:6px">
-            Įvertinimas pateiktas. Slaugytoja turėtų ateiti.
-            <br><br>
-            Jei skausmas nemažėja arba slaugytoja neateina per <strong>~15 min</strong>,
-            spauskite palatos iškvietimo mygtuką arba ateikite į slaugytojų postą.
-          </div>
-        `;
-        medsBox.classList.add("hidden");
-      } else {
-        adviceBox.innerHTML = `
-          <div class="bad"><strong>Didelis skausmas.</strong></div>
-          <div class="note" style="margin-top:6px">
-            Įvertinimas pateiktas. Slaugytoja turėtų ateiti <strong>kuo greičiau</strong>.
-            <br><br>
-            Jei slaugytoja neateina per <strong>~10 min</strong>, spauskite palatos iškvietimo mygtuką
-            arba ateikite į slaugytojų postą.
-          </div>
-        `;
-        medsBox.classList.add("hidden");
-      }
+  if (selectedPain === 0) {
+  adviceBox.innerHTML = `
+    <div class="ok"><strong>Skausmo nėra.</strong></div>
+    <div class="note" style="margin-top:6px">
+      Ačiū. Jei situacija pasikeistų – įvertinkite skausmą dar kartą.
+    </div>
+  `;
+  medsBox.classList.add("hidden"); // 0 – nerodom "noriu vaistų"
+}
+else if (selectedPain >= 1 && selectedPain <= 3) {
+  adviceBox.innerHTML = `
+    <div class="ok"><strong>Nedidelis skausmas.</strong></div>
+    <div class="note" style="margin-top:6px">
+      Galite pabandyti nefarmakologines priemones:
+      <ul>
+        <li>Patogesnė padėtis / pagalvėlių korekcija</li>
+        <li>Ramus kvėpavimas, atsipalaidavimas</li>
+        <li>Dėmesio nukreipimas (muzika, TV, pokalbis)</li>
+      </ul>
+    </div>
+  `;
+  medsBox.classList.remove("hidden"); // 1–3 – paliekam opciją vaistams (kaip plane)
+}
+else if (selectedPain >= 4 && selectedPain <= 6) {
+  adviceBox.innerHTML = `
+    <div class="warn"><strong>Vidutinis skausmas.</strong></div>
+    <div class="note" style="margin-top:6px">
+      Įvertinimas pateiktas. Slaugytoja turėtų ateiti.
+      <br><br>
+      Jei skausmas nemažėja arba slaugytoja neateina per <strong>~15 min</strong>,
+      spauskite palatos iškvietimo mygtuką arba ateikite į slaugytojų postą.
+    </div>
+  `;
+  medsBox.classList.add("hidden");
+}
+else { // 7–10
+  adviceBox.innerHTML = `
+    <div class="bad"><strong>Didelis skausmas.</strong></div>
+    <div class="note" style="margin-top:6px">
+      Įvertinimas pateiktas. Slaugytoja turėtų ateiti <strong>kuo greičiau</strong>.
+      <br><br>
+      Jei slaugytoja neateina per <strong>~10 min</strong>, spauskite palatos iškvietimo mygtuką
+      arba ateikite į slaugytojų postą.
+    </div>
+  `;
+  medsBox.classList.add("hidden");
+}
     }
 
     // --- 0-3: noriu vaistų ---
