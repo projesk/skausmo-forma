@@ -27,13 +27,22 @@
     .pill.red{background:#ffe8e8;border-color:#ffb3b3;color:#8b0000;font-weight:800}
     .pill.orange{background:#fff3e0;border-color:#ffd59a;color:#8a5200;font-weight:800}
     .pill.gray{background:#f3f4f6;border-color:#e5e7eb;color:#374151;font-weight:700}
+    .pill.done{background:#eaf7ee;border-color:#22c55e;color:#14532d;font-weight:900}
     .big{font-size:22px;font-weight:900}
     .time{font-size:12px;color:#555}
     .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
     .hint{font-size:12px;color:#666;margin-bottom:10px}
-    .statusDone{opacity:.75}
-    .muted{opacity:.6}
-    .viewTag{font-weight:800}
+    .muted{opacity:.7}
+    .viewTag{font-weight:900}
+
+    /* DONE: švelniai žalia visam kortelės fonui */
+    .card.done{
+      background:#eaf7ee;
+      border-color:#9fd5b3;
+    }
+    .card.done .bar{
+      background:#22c55e !important;
+    }
   </style>
 </head>
 <body>
@@ -54,7 +63,9 @@
 
 <div class="wrap">
   <div class="hint">
-    Spalva: 0–3 (žalia) • 4–6 (geltona) • 7–10 (raudona). „ALERGIJA“ – pacientas pažymėjo alergiją. „PRAŠO VAISTŲ“ – pacientas pageidauja farmakologinio malšinimo.
+    Spalva: 0–3 (žalia) • 4–6 (geltona) • 7–10 (raudona).
+    „ALERGIJA“ – pacientas pažymėjo alergiją. „PRAŠO VAISTŲ“ – pacientas pageidauja vaistų.
+    Paspaudus „Atlikta“ kortelė tampa žalia ir pažymima „ATLIKTA“.
   </div>
   <div id="grid" class="grid"></div>
 </div>
@@ -63,14 +74,13 @@
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw4cdh6miY0FPdhHUaR8CxaRNarh01J1rY_QhCN7A5TTvyDgcDED57jZOBGk0g-m05b_A/exec";
   const REFRESH_SEC = 10;
 
-  // view: post1 | post2 | all  (default: post1)
+  // view: post1 | post2 | all (default: post1)
   const qp = new URLSearchParams(location.search);
   const view = (qp.get("view") || "post1").trim().toLowerCase();
 
-  // map view -> Apps Script post param + label
   const VIEW_MAP = {
-    post1: { post:"1", label:"Postas 1" },
-    post2: { post:"2", label:"Postas 2" },
+    post1: { post:"1",   label:"Postas 1" },
+    post2: { post:"2",   label:"Postas 2" },
     all:   { post:"ALL", label:"Visos palatos + TEST" }
   };
   const cfg = VIEW_MAP[view] || VIEW_MAP.post1;
@@ -151,26 +161,31 @@
       .replaceAll('"',"&quot;")
       .replaceAll("'","&#039;");
   }
+  function escapeJs(s){
+    return String(s).replaceAll("\\","\\\\").replaceAll("'","\\'");
+  }
 
   function cardHTML(b){
     const painRaw = (b.lastPain === "" || b.lastPain === null || b.lastPain === undefined) ? "" : String(b.lastPain);
     const painNum = Number(painRaw);
     const hasPain = Number.isFinite(painNum);
 
-    const allergy = String(b.allergy || "").toUpperCase(); // YES/NO/NA
-    const meds = String(b.medsRequested || "").toUpperCase(); // YES/NO
-    const status = String(b.status || "").toUpperCase();
+    const allergy = String(b.allergy || "").toUpperCase();       // YES/NO/NA
+    const meds = String(b.medsRequested || "").toUpperCase();     // YES/NO
+    const status = String(b.status || "").toUpperCase();          // OPEN/DONE/CLEARED
     const post = String(b.post || "");
 
-    const barColor = hasPain ? colorFor(painNum) : "#e5e7eb";
     const isDone = status === "DONE";
     const isCleared = status === "CLEARED";
 
     const isTest = (String(b.bed||"").toUpperCase().startsWith("TEST") || String(post).toUpperCase()==="TEST");
     const tag = isTest ? `<span class="pill gray">TEST</span>` : `<span class="pill">postas ${escapeHtml(post)}</span>`;
 
+    // jei DONE – visada žalia, kitaip pagal skausmą
+    const barColor = isDone ? "#22c55e" : (hasPain ? colorFor(painNum) : "#e5e7eb");
+
     return `
-      <div class="card ${(isDone||isCleared) ? "statusDone" : ""}" data-token="${escapeHtml(b.token||"")}">
+      <div class="card ${isDone ? "done" : ""}" data-token="${escapeHtml(b.token||"")}">
         <div class="bar" style="background:${barColor}"></div>
 
         <div class="row">
@@ -181,6 +196,7 @@
         <div class="row">
           <div class="big">${hasPain ? painNum + "/10" : "–"}</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+            ${isDone ? `<span class="pill done">ATLIKTA</span>` : ``}
             ${meds === "YES" ? `<span class="pill orange">PRAŠO VAISTŲ</span>` : ``}
             ${allergy === "YES" ? `<span class="pill red">ALERGIJA</span>` : ``}
           </div>
@@ -193,15 +209,11 @@
         </div>
 
         <div class="actions">
-          <button class="btn secondary" onclick="markDone('${escapeJs(b.token||"")}')">Atlikta</button>
+          ${!isDone ? `<button class="btn secondary" onclick="markDone('${escapeJs(b.token||"")}')">Atlikta</button>` : ``}
           <button class="btn danger" onclick="clearBed('${escapeJs(b.token||"")}')">Naujas pacientas</button>
         </div>
       </div>
     `;
-  }
-
-  function escapeJs(s){
-    return String(s).replaceAll("\\","\\\\").replaceAll("'","\\'");
   }
 
   async function api(params){
@@ -213,14 +225,14 @@
   async function load(manual=false){
     try{
       refreshBtn.disabled = true;
-      const data = await api({ action:"getDashboard", post: cfg.post });
 
+      const data = await api({ action:"getDashboard", post: cfg.post });
       if(!data || data.ok !== true) throw new Error((data && data.error) ? data.error : "Nežinoma klaida");
 
       const beds = Array.isArray(data.beds) ? data.beds : [];
       grid.innerHTML = beds.map(cardHTML).join("") || `<div class="hint">Nėra duomenų.</div>`;
 
-      // naujų įrašų aptikimas (garsas)
+      // naujų įrašų aptikimas (garsas) – reaguojam tik į lastTime pokytį
       let hasNew = false;
       const newSeen = { ...seen };
 
@@ -260,7 +272,9 @@
     try{
       await api({ action:"markDone", id: token });
       await load(true);
-    }catch(e){ alert("Nepavyko pažymėti 'Atlikta'."); }
+    }catch(e){
+      alert("Nepavyko pažymėti 'Atlikta'.");
+    }
   }
 
   window.clearBed = async function(token){
@@ -269,7 +283,9 @@
     try{
       await api({ action:"clearBed", id: token });
       await load(true);
-    }catch(e){ alert("Nepavyko išvalyti lovos."); }
+    }catch(e){
+      alert("Nepavyko išvalyti lovos.");
+    }
   }
 
   // start
