@@ -1,296 +1,263 @@
 <!doctype html>
 <html lang="lt">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Skausmo suvestinė slaugytojoms</title>
-  <style>
-    body{font-family:Arial,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;background:#fafafa;color:#111}
-    header{position:sticky;top:0;background:#fff;border-bottom:1px solid #e6e6e6;padding:12px 14px;z-index:5}
-    .top{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
-    h1{font-size:18px;margin:0}
-    .meta{color:#555;font-size:13px}
-    .btn{border:0;border-radius:10px;padding:.55rem .9rem;font-size:14px;cursor:pointer;background:#663399;color:#fff}
-    .btn.secondary{background:#f2f2f2;color:#111;border:1px solid #ddd}
-    .btn.danger{background:#b00020}
-    .btn:disabled{opacity:.55;cursor:not-allowed}
-    .wrap{max-width:1250px;margin:0 auto;padding:14px}
-    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-    @media(min-width:900px){ .grid{grid-template-columns:repeat(4,minmax(0,1fr));} }
-    @media(min-width:1200px){ .grid{grid-template-columns:repeat(6,minmax(0,1fr));} }
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Slaugytojų dashboard</title>
 
-    .card{background:#fff;border:1px solid #e6e6e6;border-radius:14px;padding:12px;min-height:118px;display:flex;flex-direction:column;gap:8px}
-    .bar{height:10px;border-radius:999px;background:#e5e7eb}
-    .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
-    .bed{font-weight:900;font-size:16px}
-    .pill{font-size:12px;border-radius:999px;padding:3px 8px;border:1px solid #ddd;background:#fafafa;color:#333;white-space:nowrap}
-    .pill.red{background:#ffe8e8;border-color:#ffb3b3;color:#8b0000;font-weight:800}
-    .pill.orange{background:#fff3e0;border-color:#ffd59a;color:#8a5200;font-weight:800}
-    .pill.gray{background:#f3f4f6;border-color:#e5e7eb;color:#374151;font-weight:700}
-    .pill.done{background:#eaf7ee;border-color:#22c55e;color:#14532d;font-weight:900}
-    .big{font-size:22px;font-weight:900}
-    .time{font-size:12px;color:#555}
-    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
-    .hint{font-size:12px;color:#666;margin-bottom:10px}
-    .muted{opacity:.7}
-    .viewTag{font-weight:900}
+<style>
+body{font-family:Arial;margin:0;background:#f6f7f9;color:#111}
+header{
+  background:#fff;
+  padding:12px 16px;
+  border-bottom:1px solid #ddd;
+  font-weight:bold;
+  position:sticky;
+  top:0;
+  z-index:5;
+}
 
-    /* DONE: švelniai žalia visam kortelės fonui */
-    .card.done{
-      background:#eaf7ee;
-      border-color:#9fd5b3;
-    }
-    .card.done .bar{
-      background:#22c55e !important;
-    }
-  </style>
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  gap:12px;
+  padding:12px;
+}
+
+.ward{
+  background:#fff;
+  border:1px solid #ddd;
+  border-radius:16px;
+  padding:10px;
+  box-shadow:0 2px 6px rgba(0,0,0,.05);
+}
+
+.ward.red{
+  border-color:#d32f2f;
+  background:#fff5f5;
+}
+
+.bed{
+  border-top:1px dashed #ddd;
+  margin-top:6px;
+  padding-top:6px;
+  font-size:14px;
+}
+
+.bed.done{
+  background:#eaf7ee;
+  border-radius:10px;
+  padding:6px;
+}
+
+.history{
+  font-size:12px;
+  color:#555;
+  margin-top:4px;
+  line-height:1.4;
+}
+
+.badge{
+  display:inline-block;
+  font-size:11px;
+  padding:2px 6px;
+  border-radius:999px;
+  border:1px solid #ccc;
+  margin-top:3px;
+}
+
+.badge.red{
+  background:#ffe8e8;
+  border-color:#ffb3b3;
+  color:#8b0000;
+  font-weight:bold;
+}
+
+.badge.green{
+  background:#eaf7ee;
+  border-color:#22c55e;
+  color:#14532d;
+  font-weight:bold;
+}
+
+button{
+  border:0;
+  border-radius:8px;
+  padding:4px 8px;
+  cursor:pointer;
+  font-size:12px;
+  margin-top:4px;
+}
+
+.clear{background:#b00020;color:#fff}
+.doneBtn{background:#663399;color:#fff}
+.controls{display:flex;gap:8px}
+</style>
 </head>
+
 <body>
+
 <header>
-  <div class="top">
-    <div>
-      <h1>Skausmo suvestinė – <span class="viewTag" id="viewOut">…</span></h1>
-      <div class="meta">
-        Atnaujinama kas <span id="intOut">10</span> s • <span id="lastOut">–</span>
-      </div>
-    </div>
-    <div class="top">
-      <button id="soundBtn" class="btn secondary">Įjungti garsą</button>
-      <button id="refreshBtn" class="btn">Atnaujinti</button>
-    </div>
+  Slaugytojų dashboard
+  <span id="lastUpdate" style="font-size:12px;color:#666;margin-left:10px"></span>
+  <div class="controls" style="float:right">
+    <button onclick="manualRefresh()">Atnaujinti</button>
+    <button onclick="enableSound()" id="soundBtn">🔔 Garsas</button>
   </div>
 </header>
 
-<div class="wrap">
-  <div class="hint">
-    Spalva: 0–3 (žalia) • 4–6 (geltona) • 7–10 (raudona).
-    „ALERGIJA“ – pacientas pažymėjo alergiją. „PRAŠO VAISTŲ“ – pacientas pageidauja vaistų.
-    Paspaudus „Atlikta“ kortelė tampa žalia ir pažymima „ATLIKTA“.
-  </div>
-  <div id="grid" class="grid"></div>
-</div>
+<div class="grid" id="grid"></div>
 
 <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw4cdh6miY0FPdhHUaR8CxaRNarh01J1rY_QhCN7A5TTvyDgcDED57jZOBGk0g-m05b_A/exec";
-  const REFRESH_SEC = 10;
+const SCRIPT_URL="https://script.google.com/macros/s/AKfycbw4cdh6miY0FPdhHUaR8CxaRNarh01J1rY_QhCN7A5TTvyDgcDED57jZOBGk0g-m05b_A/exec";
 
-  // view: post1 | post2 | all (default: post1)
-  const qp = new URLSearchParams(location.search);
-  const view = (qp.get("view") || "post1").trim().toLowerCase();
+let seenTimes={};
+let soundEnabled=false;
+let audioCtx=null;
 
-  const VIEW_MAP = {
-    post1: { post:"1",   label:"Postas 1" },
-    post2: { post:"2",   label:"Postas 2" },
-    all:   { post:"ALL", label:"Visos palatos + TEST" }
-  };
-  const cfg = VIEW_MAP[view] || VIEW_MAP.post1;
-
-  document.getElementById("viewOut").textContent = cfg.label;
-  document.getElementById("intOut").textContent = String(REFRESH_SEC);
-
-  const grid = document.getElementById("grid");
-  const refreshBtn = document.getElementById("refreshBtn");
-  const soundBtn = document.getElementById("soundBtn");
-  const lastOut = document.getElementById("lastOut");
-
-  // garsas (naršyklės ribojimai -> turi būti įjungta mygtuku)
-  let audioEnabled = false;
-  let audioCtx = null;
-
-  function beep(){
-    if(!audioEnabled) return;
-    try{
-      if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const o = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      o.type = "sine";
-      o.frequency.value = 880;
-      g.gain.value = 0.06;
-      o.connect(g); g.connect(audioCtx.destination);
-      o.start();
-      setTimeout(()=>{ o.stop(); }, 160);
-    }catch(e){}
+/* ===== SOUND ===== */
+function enableSound(){
+  try{
+    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    audioCtx.resume();
+    soundEnabled=true;
+    document.getElementById("soundBtn").innerText="🔔 Įjungta";
+  }catch(e){
+    alert("Naršyklė blokuoja garsą");
   }
+}
 
-  soundBtn.addEventListener("click", async () => {
-    try{
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      await audioCtx.resume();
-      audioEnabled = true;
-      soundBtn.textContent = "Garsas įjungtas";
-      soundBtn.disabled = true;
-      beep();
-    }catch(e){
-      alert("Nepavyko įjungti garso (naršyklės ribojimai).");
+function beep(){
+  if(!soundEnabled) return;
+  const o=audioCtx.createOscillator();
+  const g=audioCtx.createGain();
+  o.frequency.value=880;
+  g.gain.value=0.05;
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start();
+  setTimeout(()=>o.stop(),150);
+}
+
+/* ===== Grupavimas ===== */
+function groupByWard(beds){
+  const map={};
+  for(const b of beds){
+    const ward=b.bed.split("-")[0];
+    if(!map[ward]) map[ward]=[];
+    map[ward].push(b);
+  }
+  return map;
+}
+
+/* ===== HTML ===== */
+function wardHTML(ward,beds){
+  const hasAllergy=beds.some(b=>b.allergy==="YES");
+  return `
+  <div class="ward ${hasAllergy?'red':''}">
+    <b>Palata ${ward}</b>
+    ${beds.map(bedHTML).join("")}
+  </div>`;
+}
+
+function bedHTML(b){
+  const pain=b.lastPain!==""?b.lastPain+"/10":"-";
+  const done=b.status==="DONE";
+
+  return `
+  <div class="bed ${done?'done':''}">
+    <b>Lova ${b.bed}</b><br>
+    Skausmas: <b>${pain}</b><br>
+    Statusas: ${b.status}<br>
+
+    ${b.allergy==="YES" ? '<span class="badge red">ALERGIJA</span><br>' : ''}
+    ${done ? '<span class="badge green">ATLIKTA</span><br>' : ''}
+
+    <div class="history">
+      ${historyHTML(b.history)}
+    </div>
+
+    ${!done ? `<button class="doneBtn" onclick="markDone('${b.token}')">Atlikta</button>` : ''}
+
+    <button class="clear" onclick="clearBed('${b.token}')">
+      Naujas pacientas
+    </button>
+  </div>`;
+}
+
+function historyHTML(history){
+  if(!history||!history.length) return "Nėra vertinimų";
+
+  return history.map(h=>{
+    const t=new Date(h.time);
+    return `• ${h.pain}/10 (${t.toLocaleTimeString("lt-LT")})`;
+  }).join("<br>");
+}
+
+/* ===== API ===== */
+async function api(params){
+  const url=SCRIPT_URL+"?"+new URLSearchParams(params);
+  const res=await fetch(url);
+  return await res.json();
+}
+
+/* ===== LOAD ===== */
+async function load(){
+  try{
+    const data=await api({action:"getDashboardDetailed"});
+    const beds=data.beds||[];
+
+    detectNew(beds);
+
+    const grouped=groupByWard(beds);
+
+    document.getElementById("grid").innerHTML=
+      Object.entries(grouped)
+        .sort((a,b)=>Number(a[0])-Number(b[0]))
+        .map(([w,b])=>wardHTML(w,b))
+        .join("");
+
+    document.getElementById("lastUpdate").innerText=
+      "Atnaujinta "+new Date().toLocaleTimeString("lt-LT");
+
+  }catch(e){
+    console.error(e);
+  }
+}
+
+/* ===== Nauji įrašai ===== */
+function detectNew(beds){
+  let newEntry=false;
+
+  for(const b of beds){
+    if(!b.lastTime) continue;
+
+    if(seenTimes[b.token] && seenTimes[b.token]!==b.lastTime){
+      newEntry=true;
     }
-  });
 
-  refreshBtn.addEventListener("click", () => load(true));
-
-  // naujumo aptikimas: token -> lastTime
-  const LS_KEY = "nurse_last_seen_" + view;
-  function loadSeen(){
-    try{ return JSON.parse(localStorage.getItem(LS_KEY) || "{}"); }catch(e){ return {}; }
-  }
-  function saveSeen(obj){
-    try{ localStorage.setItem(LS_KEY, JSON.stringify(obj)); }catch(e){}
-  }
-  let seen = loadSeen();
-  let firstLoad = true;
-
-  function colorFor(pain){
-    const n = Number(pain);
-    if(!Number.isFinite(n)) return "#e5e7eb";
-    if(n <= 3) return "#22c55e";
-    if(n <= 6) return "#facc15";
-    return "#ef4444";
+    seenTimes[b.token]=b.lastTime;
   }
 
-  function fmtTime(iso){
-    if(!iso) return "–";
-    const d = new Date(iso);
-    if(isNaN(d.getTime())) return String(iso);
-    return d.toLocaleString("lt-LT", {hour:"2-digit", minute:"2-digit", day:"2-digit", month:"2-digit"});
-  }
+  if(newEntry) beep();
+}
 
-  function escapeHtml(s){
-    return String(s)
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-  function escapeJs(s){
-    return String(s).replaceAll("\\","\\\\").replaceAll("'","\\'");
-  }
+/* ===== ACTIONS ===== */
+async function markDone(token){
+  await api({action:"markDone",id:token});
+  load();
+}
 
-  function cardHTML(b){
-    const painRaw = (b.lastPain === "" || b.lastPain === null || b.lastPain === undefined) ? "" : String(b.lastPain);
-    const painNum = Number(painRaw);
-    const hasPain = Number.isFinite(painNum);
+async function clearBed(token){
+  if(!confirm("Ištrinti visus lovos duomenis?")) return;
+  await api({action:"clearBedFull",id:token});
+  load();
+}
 
-    const allergy = String(b.allergy || "").toUpperCase();       // YES/NO/NA
-    const meds = String(b.medsRequested || "").toUpperCase();     // YES/NO
-    const status = String(b.status || "").toUpperCase();          // OPEN/DONE/CLEARED
-    const post = String(b.post || "");
+function manualRefresh(){ load(); }
 
-    const isDone = status === "DONE";
-    const isCleared = status === "CLEARED";
-
-    const isTest = (String(b.bed||"").toUpperCase().startsWith("TEST") || String(post).toUpperCase()==="TEST");
-    const tag = isTest ? `<span class="pill gray">TEST</span>` : `<span class="pill">postas ${escapeHtml(post)}</span>`;
-
-    // jei DONE – visada žalia, kitaip pagal skausmą
-    const barColor = isDone ? "#22c55e" : (hasPain ? colorFor(painNum) : "#e5e7eb");
-
-    return `
-      <div class="card ${isDone ? "done" : ""}" data-token="${escapeHtml(b.token||"")}">
-        <div class="bar" style="background:${barColor}"></div>
-
-        <div class="row">
-          <div class="bed">${escapeHtml(b.bed || "")}</div>
-          ${tag}
-        </div>
-
-        <div class="row">
-          <div class="big">${hasPain ? painNum + "/10" : "–"}</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
-            ${isDone ? `<span class="pill done">ATLIKTA</span>` : ``}
-            ${meds === "YES" ? `<span class="pill orange">PRAŠO VAISTŲ</span>` : ``}
-            ${allergy === "YES" ? `<span class="pill red">ALERGIJA</span>` : ``}
-          </div>
-        </div>
-
-        <div class="time">
-          Pask.: ${fmtTime(b.lastTime)}
-          ${isDone && b.doneTime ? ` • Atlikta: ${fmtTime(b.doneTime)}` : ``}
-          ${isCleared ? ` • <span class="muted">Naujas pacientas</span>` : ``}
-        </div>
-
-        <div class="actions">
-          ${!isDone ? `<button class="btn secondary" onclick="markDone('${escapeJs(b.token||"")}')">Atlikta</button>` : ``}
-          <button class="btn danger" onclick="clearBed('${escapeJs(b.token||"")}')">Naujas pacientas</button>
-        </div>
-      </div>
-    `;
-  }
-
-  async function api(params){
-    const url = SCRIPT_URL + "?" + new URLSearchParams(params).toString();
-    const res = await fetch(url, { method:"GET" });
-    return await res.json();
-  }
-
-  async function load(manual=false){
-    try{
-      refreshBtn.disabled = true;
-
-      const data = await api({ action:"getDashboard", post: cfg.post });
-      if(!data || data.ok !== true) throw new Error((data && data.error) ? data.error : "Nežinoma klaida");
-
-      const beds = Array.isArray(data.beds) ? data.beds : [];
-      grid.innerHTML = beds.map(cardHTML).join("") || `<div class="hint">Nėra duomenų.</div>`;
-
-      // naujų įrašų aptikimas (garsas) – reaguojam tik į lastTime pokytį
-      let hasNew = false;
-      const newSeen = { ...seen };
-
-      for(const b of beds){
-        const t = String(b.token || "");
-        const lt = String(b.lastTime || "");
-        if(!t || !lt) continue;
-
-        const prev = String(seen[t] || "");
-        if(!firstLoad && lt !== prev){
-          hasNew = true;
-        }
-        newSeen[t] = lt;
-      }
-
-      seen = newSeen;
-      saveSeen(seen);
-      firstLoad = false;
-
-      if(hasNew) beep();
-
-      lastOut.textContent =
-        "Paskutinis atnaujinimas: " +
-        new Date().toLocaleTimeString("lt-LT",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
-
-    }catch(err){
-      console.error(err);
-      alert("Klaida: " + (err && err.message ? err.message : err));
-    }finally{
-      refreshBtn.disabled = false;
-    }
-  }
-
-  // actions (global scope dėl onclick)
-  window.markDone = async function(token){
-    if(!token) return;
-    try{
-      await api({ action:"markDone", id: token });
-      await load(true);
-    }catch(e){
-      alert("Nepavyko pažymėti 'Atlikta'.");
-    }
-  }
-
-  window.clearBed = async function(token){
-    if(!token) return;
-    if(!confirm("Ar tikrai pradėti naują pacientą šiai lovai? (bus išvalyta būsena)")) return;
-    try{
-      await api({ action:"clearBed", id: token });
-      await load(true);
-    }catch(e){
-      alert("Nepavyko išvalyti lovos.");
-    }
-  }
-
-  // start
-  load(true);
-  setInterval(load, REFRESH_SEC * 1000);
+load();
+setInterval(load,10000);
 </script>
+
 </body>
 </html>
