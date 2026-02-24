@@ -19,7 +19,7 @@
   --ok:#166534;
   --okBg:#ecfdf5;
   --shadow:0 2px 10px rgba(0,0,0,.06);
-  --shadowHover:0 10px 20px rgba(0,0,0,.10);
+  --shadowHover:0 8px 18px rgba(0,0,0,.10);
 }
 
 *{box-sizing:border-box}
@@ -36,7 +36,7 @@ header{
   position:sticky;
   top:0;
   z-index:10;
-  background:rgba(255,255,255,.9);
+  background:rgba(255,255,255,.92);
   backdrop-filter:blur(6px);
   border-bottom:1px solid var(--soft);
   padding:14px 18px;
@@ -74,6 +74,7 @@ header{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(360px,1fr));
   gap:18px;
+  align-items:start;   /* 🔥 FIXAS – palatos nebesitęs */
 }
 
 /* WARD */
@@ -83,6 +84,7 @@ header{
   border-radius:18px;
   padding:14px;
   box-shadow:var(--shadow);
+  align-self:start;
 }
 
 .wardHeaderRow{
@@ -118,7 +120,11 @@ header{
 }
 
 /* BEDS */
-.beds{display:flex;flex-direction:column;gap:12px}
+.beds{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
 
 .bedCard{
   border:1.5px solid var(--border);
@@ -275,7 +281,7 @@ function wardSortKey(w){
   return Number.isFinite(n)?n:999999;
 }
 
-/* 🔥 12 lova visada gale */
+/* 🔥 12 lova gale */
 function bedSortKey(b){
   const raw = b.bedNo ? String(b.bedNo) : String(b.bed||"").split("-")[1];
   const bn = parseInt(raw,10);
@@ -294,11 +300,6 @@ function groupByWard(items){
   }
   return map;
 }
-
-const LS_KEY="post1_seen_lastTime";
-let seen={};
-try{seen=JSON.parse(localStorage.getItem(LS_KEY)||"{}")}catch(e){seen={}}
-let firstLoad=true;
 
 function escapeJs(s){
   return String(s).replaceAll("\\","\\\\").replaceAll("'","\\'");
@@ -341,7 +342,7 @@ function renderBedCard(b){
   const isDone=String(b.status).toUpperCase()==="DONE";
 
   const historyText = hasHistory
-    ? hist.map(h=>`• ${h.pain}/10 (${fmtTime(h.time)})`).join("\n")
+    ? hist.map(h=>`• ${h.pain}/10 (${fmtTime(h.time)})`).join("\\n")
     : "Nėra vertinimų.";
 
   return `
@@ -359,53 +360,23 @@ function renderBedCard(b){
   `;
 }
 
-async function load(manual=false){
-  let data;
-  try{
-    data=await api({action:"getPostBoard", post:POST});
-  }catch(e){
-    alert("Ryšio klaida");
-    return;
-  }
+async function load(){
+  const data=await api({action:"getPostBoard", post:POST});
+  if(!data || data.ok!==true) return;
 
-  if(!data || data.ok!==true){
-    alert("API klaida");
-    return;
-  }
-
-  const beds=data.beds||[];
-
-  let newEntry=false;
-  const nextSeen={...seen};
-  for(const b of beds){
-    const t=String(b.token||"");
-    const lt=String(b.lastTime||"");
-    if(!t||!lt) continue;
-    const prev=String(seen[t]||"");
-    if(!firstLoad && prev && lt!==prev) newEntry=true;
-    nextSeen[t]=lt;
-  }
-  firstLoad=false;
-  seen=nextSeen;
-  try{localStorage.setItem(LS_KEY,JSON.stringify(seen))}catch(e){}
-  if(newEntry) beep();
-
-  const grouped=groupByWard(beds);
-
+  const grouped=groupByWard(data.beds||[]);
   const wardsHtml=[...grouped.entries()]
     .sort((a,b)=>wardSortKey(a[0])-wardSortKey(b[0]))
     .map(([ward,list])=>renderWard(ward,list))
     .join("");
 
-  document.getElementById("wards").innerHTML =
-    wardsHtml || `<div style="padding:14px;color:#6b7280">Nėra QR lovų.</div>`;
-
+  document.getElementById("wards").innerHTML=wardsHtml;
   document.getElementById("meta").textContent =
     `Atnaujinama kas ${REFRESH_SEC}s • ` +
     new Date().toLocaleTimeString("lt-LT",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
 }
 
-load(true);
+load();
 setInterval(load, REFRESH_SEC*1000);
 </script>
 </body>
