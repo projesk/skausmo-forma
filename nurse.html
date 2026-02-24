@@ -1,286 +1,489 @@
 <!doctype html>
 <html lang="lt">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Slaugytojų lentelė – Postas 1</title>
-<style>
-  body{font-family:Arial,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;background:#f5f6f8;color:#111}
-  header{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid #ddd;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-  .meta{font-size:12px;color:#666}
-  .btn{border:0;border-radius:10px;padding:.55rem .9rem;font-size:13px;cursor:pointer;background:#663399;color:#fff}
-  .btn.secondary{background:#f2f2f2;color:#111;border:1px solid #ddd}
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Slaugytojų langas – Postas 1</title>
 
-  /* VISOS PALATOS (1 posto) tinkleliu */
-  .wards{
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
-    gap:14px;
-    padding:14px;
-  }
+  <style>
+    :root{
+      --bg:#f3f4f6;
+      --card:#ffffff;
+      --text:#111827;
+      --muted:#6b7280;
+      --border:#111111;
+      --borderSoft:#e5e7eb;
+      --shadow:0 2px 10px rgba(0,0,0,.06);
+      --shadowHover:0 10px 20px rgba(0,0,0,.10);
+      --radius:18px;
 
-  /* PALATOS korta */
-  .ward{
-    background:#fff;
-    border:2px solid #111;
-    border-radius:12px;
-    padding:12px;
-  }
-  .wardHeader{
-    display:inline-block;
-    border:2px solid #111;
-    padding:6px 10px;
-    font-weight:900;
-    border-radius:6px;
-    margin-bottom:10px;
-    background:#fff;
-  }
+      --primary:#663399;
 
-  /* jei palatoje yra alergija – palata paryškinama */
-  .ward.allergy{
-    border-color:#b00020;
-    box-shadow:0 0 0 3px rgba(176,0,32,.12);
-    background:#fff5f6;
-  }
-  .wardHeader.allergy{
-    border-color:#b00020;
-    color:#b00020;
-  }
+      --danger:#b00020;
+      --dangerBg:#fff6f7;
 
-  /* LOVOS kortelė palatos viduje */
-  .bedCard{
-    border:2px solid #111;
-    border-radius:16px;
-    padding:12px;
-    margin:10px 0;
-    background:#fff;
-    min-height:120px;
-  }
+      --ok:#166534;
+      --okBg:#ecfdf5;
+    }
 
-  .bedTop{
-    display:flex;
-    align-items:flex-start;
-    justify-content:space-between;
-    gap:10px;
-    margin-bottom:8px;
-  }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
 
-  .bedTitle{
-    font-weight:900;
-    font-size:20px;
-    line-height:1.1;
-  }
+    /* HEADER */
+    header{
+      position:sticky;
+      top:0;
+      z-index:20;
+      background:rgba(255,255,255,.92);
+      backdrop-filter: blur(6px);
+      border-bottom:1px solid var(--borderSoft);
+      padding:14px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+    }
 
-  .newBtn{
-    border:2px solid #111;
-    background:#fff;
-    border-radius:10px;
-    padding:6px 10px;
-    cursor:pointer;
-    font-weight:800;
-  }
-  .newBtn:hover{background:#f3f3f3}
+    .titleWrap{display:flex; flex-direction:column; gap:2px}
+    .title{
+      font-weight:900;
+      letter-spacing:.2px;
+      line-height:1.15;
+      font-size:16px;
+    }
+    .meta{
+      font-size:12px;
+      color:var(--muted);
+    }
 
-  .history{
-    font-size:16px;
-    line-height:1.45;
-    white-space:pre-line;
-  }
+    .actions{display:flex; gap:10px; align-items:center}
 
-  .tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-  .tag{
-    font-size:12px;
-    padding:3px 8px;
-    border-radius:999px;
-    border:1px solid #ccc;
-    background:#fafafa;
-    color:#333;
-    font-weight:700;
-  }
-  .tag.red{border-color:#b00020;background:#ffe8ec;color:#8b0018}
-  .tag.green{border-color:#22c55e;background:#eaf7ee;color:#14532d}
-</style>
+    .btn{
+      border:0;
+      border-radius:14px;
+      padding:.62rem 1rem;
+      font-size:13px;
+      cursor:pointer;
+      background:var(--primary);
+      color:#fff;
+      font-weight:800;
+      box-shadow: 0 1px 0 rgba(0,0,0,.06);
+      transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(0px); opacity:.92}
+
+    .btn.secondary{
+      background:#f9fafb;
+      color:var(--text);
+      border:1px solid var(--borderSoft);
+      box-shadow:none;
+    }
+
+    .btn:disabled{
+      cursor:not-allowed;
+      opacity:.7;
+      transform:none;
+    }
+
+    /* GRID */
+    .container{
+      padding:18px;
+    }
+
+    .wards{
+      display:grid;
+      grid-template-columns:repeat(auto-fill, minmax(360px, 1fr));
+      gap:18px;
+      align-items:start;
+    }
+
+    /* WARD CARD */
+    .ward{
+      background:var(--card);
+      border:1.5px solid var(--border);
+      border-radius:var(--radius);
+      padding:14px;
+      box-shadow:var(--shadow);
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .wardHeaderRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .wardHeader{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border:1.5px solid var(--border);
+      padding:6px 12px;
+      font-weight:900;
+      border-radius:12px;
+      background:#fff;
+      font-size:15px;
+      line-height:1;
+      white-space:nowrap;
+    }
+
+    .wardSub{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.2;
+      text-align:right;
+      min-width:90px;
+    }
+
+    /* Allergy ward emphasis */
+    .ward.allergy{
+      border-color:var(--danger);
+      background:var(--dangerBg);
+      box-shadow: 0 0 0 3px rgba(176,0,32,.08), var(--shadow);
+    }
+    .ward.allergy .wardHeader{
+      border-color:var(--danger);
+      color:var(--danger);
+      background:#fff;
+    }
+
+    /* BED */
+    .beds{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .bedCard{
+      border:1.5px solid var(--border);
+      border-radius:20px;
+      padding:14px;
+      background:#fff;
+      transition: transform .14s ease, box-shadow .14s ease;
+      min-height:110px;
+    }
+    .bedCard:hover{
+      transform:translateY(-1px);
+      box-shadow:var(--shadowHover);
+    }
+
+    /* If DONE, give subtle tint */
+    .bedCard.done{
+      background: linear-gradient(0deg, rgba(236,253,245,.65), rgba(236,253,245,.65)), #fff;
+    }
+
+    .bedTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:8px;
+    }
+
+    .bedTitle{
+      font-weight:950;
+      font-size:20px;
+      line-height:1.1;
+      letter-spacing:.2px;
+    }
+
+    .newBtn{
+      border:1.5px solid var(--border);
+      background:#fff;
+      border-radius:14px;
+      padding:7px 10px;
+      cursor:pointer;
+      font-weight:900;
+      font-size:12px;
+      transition: background .12s ease, transform .12s ease, opacity .12s ease;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .newBtn:hover{background:#f3f4f6; transform:translateY(-1px)}
+    .newBtn:active{transform:translateY(0px); opacity:.92}
+
+    .history{
+      font-size:15px;
+      line-height:1.55;
+      white-space:pre-line;
+      color:var(--text);
+      margin-top:2px;
+    }
+    .history.empty{
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .tags{
+      display:flex;
+      gap:7px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+
+    .tag{
+      font-size:11px;
+      padding:4px 9px;
+      border-radius:999px;
+      border:1px solid #d1d5db;
+      background:#f9fafb;
+      color:#374151;
+      font-weight:900;
+      letter-spacing:.2px;
+    }
+
+    .tag.red{
+      border-color:#f1b5c0;
+      background:#ffeef1;
+      color:#9f1239;
+    }
+    .tag.green{
+      border-color:#bbf7d0;
+      background:var(--okBg);
+      color:var(--ok);
+    }
+
+    /* Small screens */
+    @media (max-width: 420px){
+      header{padding:12px}
+      .container{padding:12px}
+      .wards{grid-template-columns:1fr}
+      .ward{padding:12px}
+      .bedCard{padding:12px}
+      .bedTitle{font-size:19px}
+    }
+  </style>
 </head>
 
 <body>
-<header>
-  <div>
-    <div style="font-weight:900">Slaugytojų langas – Postas 1 (visos palatos ir lovos)</div>
-    <div class="meta" id="meta">–</div>
-  </div>
-  <div style="display:flex;gap:10px;align-items:center">
-    <button class="btn secondary" id="soundBtn">Įjungti garsą</button>
-    <button class="btn" id="refreshBtn">Atnaujinti</button>
-  </div>
-</header>
-
-<div class="wards" id="wards"></div>
-
-<script>
-const SCRIPT_URL="https://script.google.com/macros/s/AKfycbw4cdh6miY0FPdhHUaR8CxaRNarh01J1rY_QhCN7A5TTvyDgcDED57jZOBGk0g-m05b_A/exec";
-const POST = "1";
-const REFRESH_SEC = 10;
-
-// garsas tik jei vartotoja įjungia
-let audioEnabled=false;
-let audioCtx=null;
-function beep(){
-  if(!audioEnabled) return;
-  try{
-    if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-    const o=audioCtx.createOscillator();
-    const g=audioCtx.createGain();
-    o.frequency.value=880;
-    g.gain.value=0.06;
-    o.connect(g); g.connect(audioCtx.destination);
-    o.start();
-    setTimeout(()=>o.stop(),160);
-  }catch(e){}
-}
-document.getElementById("soundBtn").addEventListener("click", async ()=>{
-  try{
-    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-    await audioCtx.resume();
-    audioEnabled=true;
-    document.getElementById("soundBtn").textContent="Garsas įjungtas";
-    document.getElementById("soundBtn").disabled=true;
-    beep();
-  }catch(e){
-    alert("Nepavyko įjungti garso (naršyklės ribojimai).");
-  }
-});
-
-document.getElementById("refreshBtn").addEventListener("click", ()=>load(true));
-
-async function api(params){
-  const url = SCRIPT_URL + "?" + new URLSearchParams(params);
-  const res = await fetch(url);
-  return await res.json();
-}
-
-function fmtTime(iso){
-  if(!iso) return "";
-  const d=new Date(iso);
-  if(isNaN(d.getTime())) return String(iso);
-  return d.toLocaleTimeString("lt-LT",{hour:"2-digit",minute:"2-digit"});
-}
-
-function groupByWard(items){
-  const map=new Map();
-  for(const b of items){
-    const w=String(b.ward||"");
-    if(!map.has(w)) map.set(w, []);
-    map.get(w).push(b);
-  }
-  return map;
-}
-
-// naujumo aptikimas garsui
-const LS_KEY="post1_seen_lastTime";
-let seen = {};
-try{ seen = JSON.parse(localStorage.getItem(LS_KEY)||"{}"); }catch(e){ seen={}; }
-let firstLoad=true;
-
-function renderWard(ward, beds){
-  const wardHasAllergy = beds.some(b => String(b.allergy).toUpperCase()==="YES");
-
-  return `
-    <div class="ward ${wardHasAllergy ? "allergy" : ""}">
-      <div class="wardHeader ${wardHasAllergy ? "allergy" : ""}">
-        ${ward} palata ${wardHasAllergy ? "— ALERGIJA" : ""}
-      </div>
-
-      ${beds.map(renderBedCard).join("")}
+  <header>
+    <div class="titleWrap">
+      <div class="title">Slaugytojų langas – Postas 1 (visos palatos ir lovos)</div>
+      <div class="meta" id="meta">–</div>
     </div>
-  `;
-}
 
-function renderBedCard(b){
-  const bedNo = b.bedNo ? String(b.bedNo) : (String(b.bed).split("-")[1] || "");
-  const title = `${bedNo} lova`;
-
-  const hist = Array.isArray(b.history) ? b.history : [];
-  const hasHistory = hist.length > 0;
-
-  // jei nėra vertinimų – nieko nerodom (tik pavadinimą + mygtuką)
-  const historyText = hasHistory
-    ? hist.map(h => `• ${h.pain}/10 (${fmtTime(h.time)})`).join("\n")
-    : "";
-
-  const allergyYes = String(b.allergy).toUpperCase()==="YES";
-  const isDone = String(b.status).toUpperCase()==="DONE";
-
-  return `
-    <div class="bedCard">
-      <div class="bedTop">
-        <div class="bedTitle">${title}</div>
-        <button class="newBtn" onclick="newPatient('${escapeJs(b.token||"")}')">Naujas pacientas</button>
-      </div>
-
-      <div class="history">${historyText}</div>
-
-      <div class="tags">
-        ${allergyYes ? `<span class="tag red">ALERGIJA</span>` : ``}
-        ${isDone ? `<span class="tag green">ATLIKTA</span>` : ``}
-      </div>
+    <div class="actions">
+      <button class="btn secondary" id="soundBtn">Įjungti garsą</button>
+      <button class="btn" id="refreshBtn">Atnaujinti</button>
     </div>
-  `;
-}
+  </header>
 
-function escapeJs(s){
-  return String(s).replaceAll("\\","\\\\").replaceAll("'","\\'");
-}
+  <div class="container">
+    <div class="wards" id="wards"></div>
+  </div>
 
-async function newPatient(token){
-  if(!token) return;
-  if(!confirm("Ar tikrai pradėti naują pacientą? Bus ištrinti visi šios lovos vertinimai.")) return;
-  await api({ action:"clearBedFull", id: token });
-  await load(true);
-}
+  <script>
+    const SCRIPT_URL="https://script.google.com/macros/s/AKfycbw4cdh6miY0FPdhHUaR8CxaRNarh01J1rY_QhCN7A5TTvyDgcDED57jZOBGk0g-m05b_A/exec";
+    const POST = "1";
+    const REFRESH_SEC = 10;
 
-async function load(manual=false){
-  const data = await api({ action:"getPostBoard", post: POST });
+    // garsas tik jei vartotoja įjungia
+    let audioEnabled=false;
+    let audioCtx=null;
 
-  if(!data || data.ok !== true){
-    alert("Klaida gaunant duomenis.");
-    return;
-  }
+    function beep(){
+      if(!audioEnabled) return;
+      try{
+        if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+        const o=audioCtx.createOscillator();
+        const g=audioCtx.createGain();
+        o.frequency.value=880;
+        g.gain.value=0.06;
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start();
+        setTimeout(()=>o.stop(),160);
+      }catch(e){}
+    }
 
-  const beds = data.beds || [];
+    document.getElementById("soundBtn").addEventListener("click", async ()=>{
+      try{
+        audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+        await audioCtx.resume();
+        audioEnabled=true;
+        const btn=document.getElementById("soundBtn");
+        btn.textContent="Garsas įjungtas";
+        btn.disabled=true;
+        beep();
+      }catch(e){
+        alert("Nepavyko įjungti garso (naršyklės ribojimai).");
+      }
+    });
 
-  // garsas, jei pasikeitė lastTime
-  let newEntry=false;
-  const nextSeen={...seen};
-  for(const b of beds){
-    const t = String(b.token||"");
-    const lt = String(b.lastTime||"");
-    if(!t || !lt) continue;
-    const prev = String(seen[t]||"");
-    if(!firstLoad && prev && lt !== prev) newEntry=true;
-    nextSeen[t]=lt;
-  }
-  firstLoad=false;
-  seen=nextSeen;
-  try{ localStorage.setItem(LS_KEY, JSON.stringify(seen)); }catch(e){}
-  if(newEntry) beep();
+    document.getElementById("refreshBtn").addEventListener("click", ()=>load(true));
 
-  const grouped = groupByWard(beds);
+    async function api(params){
+      const url = SCRIPT_URL + "?" + new URLSearchParams(params);
+      const res = await fetch(url);
+      return await res.json();
+    }
 
-  // render
-  const wardsHtml = [...grouped.entries()]
-    .sort((a,b)=>parseInt(a[0],10)-parseInt(b[0],10))
-    .map(([ward, list]) => renderWard(ward, list))
-    .join("");
+    function fmtTime(iso){
+      if(!iso) return "";
+      const d=new Date(iso);
+      if(isNaN(d.getTime())) return String(iso);
+      return d.toLocaleTimeString("lt-LT",{hour:"2-digit",minute:"2-digit"});
+    }
 
-  document.getElementById("wards").innerHTML = wardsHtml || `<div style="padding:14px;color:#666">Nėra QR lovų poste 1.</div>`;
+    function wardSortKey(w){
+      const n=parseInt(String(w),10);
+      return Number.isFinite(n) ? n : 999999;
+    }
 
-  document.getElementById("meta").textContent =
-    `Atnaujinama kas ${REFRESH_SEC}s • Paskutinis atnaujinimas: ` +
-    new Date().toLocaleTimeString("lt-LT",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
-}
+    function bedSortKey(b){
+      // b.bedNo arba iš "ward-bed"
+      const bn = b.bedNo ? parseInt(String(b.bedNo),10) : parseInt(String(b.bed||"").split("-")[1],10);
+      return Number.isFinite(bn) ? bn : 999999;
+    }
 
-load(true);
-setInterval(load, REFRESH_SEC*1000);
-</script>
+    function groupByWard(items){
+      const map=new Map();
+      for(const b of items){
+        const w=String(b.ward||"");
+        if(!map.has(w)) map.set(w, []);
+        map.get(w).push(b);
+      }
+      return map;
+    }
+
+    // naujumo aptikimas garsui
+    const LS_KEY="post1_seen_lastTime";
+    let seen = {};
+    try{ seen = JSON.parse(localStorage.getItem(LS_KEY)||"{}"); }catch(e){ seen={}; }
+    let firstLoad=true;
+
+    function escapeJs(s){
+      return String(s).replaceAll("\\","\\\\").replaceAll("'","\\'");
+    }
+
+    async function newPatient(token){
+      if(!token) return;
+      if(!confirm("Ar tikrai pradėti naują pacientą? Bus ištrinti visi šios lovos vertinimai.")) return;
+      await api({ action:"clearBedFull", id: token });
+      await load(true);
+    }
+    window.newPatient = newPatient;
+
+    function renderWard(ward, beds){
+      const wardHasAllergy = beds.some(b => String(b.allergy).toUpperCase()==="YES");
+
+      // tvarkingai išrikiuoti lovas palatoje
+      const sortedBeds = [...beds].sort((a,b)=>bedSortKey(a)-bedSortKey(b));
+
+      const doneCount = sortedBeds.filter(b => String(b.status).toUpperCase()==="DONE").length;
+
+      return `
+        <section class="ward ${wardHasAllergy ? "allergy" : ""}">
+          <div class="wardHeaderRow">
+            <div class="wardHeader">
+              ${ward} palata
+              ${wardHasAllergy ? "— ALERGIJA" : ""}
+            </div>
+            <div class="wardSub">
+              Lovų: <b>${sortedBeds.length}</b><br/>
+              Atlikta: <b>${doneCount}</b>
+            </div>
+          </div>
+
+          <div class="beds">
+            ${sortedBeds.map(renderBedCard).join("")}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderBedCard(b){
+      const bedNo = b.bedNo ? String(b.bedNo) : (String(b.bed||"").split("-")[1] || "");
+      const title = `${bedNo} lova`;
+
+      const hist = Array.isArray(b.history) ? b.history : [];
+      const hasHistory = hist.length > 0;
+
+      const historyText = hasHistory
+        ? hist.map(h => `• ${h.pain}/10 (${fmtTime(h.time)})`).join("\n")
+        : "";
+
+      const allergyYes = String(b.allergy).toUpperCase()==="YES";
+      const isDone = String(b.status).toUpperCase()==="DONE";
+
+      return `
+        <article class="bedCard ${isDone ? "done" : ""}">
+          <div class="bedTop">
+            <div class="bedTitle">${title}</div>
+            <button class="newBtn" onclick="newPatient('${escapeJs(b.token||"")}')">Naujas pacientas</button>
+          </div>
+
+          <div class="history ${hasHistory ? "" : "empty"}">
+            ${hasHistory ? historyText : "Nėra vertinimų."}
+          </div>
+
+          <div class="tags">
+            ${allergyYes ? `<span class="tag red">ALERGIJA</span>` : ``}
+            ${isDone ? `<span class="tag green">ATLIKTA</span>` : ``}
+          </div>
+        </article>
+      `;
+    }
+
+    async function load(manual=false){
+      let data;
+      try{
+        data = await api({ action:"getPostBoard", post: POST });
+      }catch(e){
+        alert("Klaida gaunant duomenis (ryšys).");
+        return;
+      }
+
+      if(!data || data.ok !== true){
+        alert("Klaida gaunant duomenis.");
+        return;
+      }
+
+      const beds = data.beds || [];
+
+      // garsas, jei pasikeitė lastTime
+      let newEntry=false;
+      const nextSeen={...seen};
+      for(const b of beds){
+        const t = String(b.token||"");
+        const lt = String(b.lastTime||"");
+        if(!t || !lt) continue;
+        const prev = String(seen[t]||"");
+        if(!firstLoad && prev && lt !== prev) newEntry=true;
+        nextSeen[t]=lt;
+      }
+      firstLoad=false;
+      seen=nextSeen;
+      try{ localStorage.setItem(LS_KEY, JSON.stringify(seen)); }catch(e){}
+      if(newEntry) beep();
+
+      const grouped = groupByWard(beds);
+
+      const wardsHtml = [...grouped.entries()]
+        .sort((a,b)=>wardSortKey(a[0]) - wardSortKey(b[0]))
+        .map(([ward, list]) => renderWard(ward, list))
+        .join("");
+
+      document.getElementById("wards").innerHTML =
+        wardsHtml || `<div style="padding:14px;color:#6b7280">Nėra QR lovų poste 1.</div>`;
+
+      document.getElementById("meta").textContent =
+        `Atnaujinama kas ${REFRESH_SEC}s • Paskutinis atnaujinimas: ` +
+        new Date().toLocaleTimeString("lt-LT",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+    }
+
+    load(true);
+    setInterval(load, REFRESH_SEC*1000);
+  </script>
 </body>
 </html>
