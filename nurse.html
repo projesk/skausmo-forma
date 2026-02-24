@@ -22,7 +22,6 @@
 }
 
 *{box-sizing:border-box}
-
 body{
   margin:0;
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
@@ -32,9 +31,7 @@ body{
 
 /* HEADER */
 header{
-  position:sticky;
-  top:0;
-  z-index:10;
+  position:sticky; top:0; z-index:10;
   background:rgba(255,255,255,.95);
   backdrop-filter:blur(6px);
   border-bottom:1px solid var(--soft);
@@ -46,12 +43,10 @@ header{
 
 .title{font-weight:900;font-size:16px}
 .meta{font-size:12px;color:var(--muted)}
-
 .actions{display:flex;gap:10px}
 
 .btn{
-  border:0;
-  border-radius:14px;
+  border:0;border-radius:14px;
   padding:.6rem 1rem;
   font-size:13px;
   cursor:pointer;
@@ -59,34 +54,35 @@ header{
   color:#fff;
   font-weight:800;
 }
-
 .btn.secondary{
   background:#f9fafb;
   color:var(--text);
   border:1px solid var(--soft);
 }
 
-/* CONTAINER */
+/* LAYOUT */
 .container{padding:18px}
 
-/* 🔥 WORD STYLE LAYOUT */
+/* ✅ TIKSLI 2 stulpelių schema */
 .wards{
   display:grid;
-  grid-template-columns:repeat(2, minmax(320px,1fr));
-  grid-auto-flow:column;     /* 👉 pildosi žemyn */
+  grid-template-columns:minmax(320px, 1fr) minmax(320px, 1fr);
   gap:18px;
   align-items:start;
 }
 
-/* MOBILE */
+/* Mobile: vienas stulpelis (schema išsities į apačią) */
 @media (max-width: 900px){
-  .wards{
-    grid-template-columns:1fr;
-    grid-auto-flow:row;
-  }
+  .wards{grid-template-columns:1fr}
+  .spacer{display:none;}
 }
 
-/* WARD */
+/* Spacer (tuščias langelis) */
+.spacer{
+  min-height:1px;
+}
+
+/* WARD CARD */
 .ward{
   background:var(--card);
   border:1.5px solid var(--border);
@@ -128,11 +124,7 @@ header{
 }
 
 /* BEDS */
-.beds{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
+.beds{display:flex;flex-direction:column;gap:10px}
 
 .bedCard{
   border:1.5px solid var(--border);
@@ -151,10 +143,7 @@ header{
   align-items:center;
 }
 
-.bedTitle{
-  font-weight:900;
-  font-size:17px;
-}
+.bedTitle{font-weight:900;font-size:17px}
 
 .newBtn{
   border:1.5px solid var(--border);
@@ -165,13 +154,13 @@ header{
   font-weight:800;
   font-size:11px;
 }
-
 .newBtn:hover{background:#f3f4f6}
 
 .history{
   font-size:13px;
   color:var(--muted);
   margin-top:2px;
+  line-height:1.35;
 }
 
 .tags{
@@ -189,18 +178,8 @@ header{
   background:#f9fafb;
   font-weight:900;
 }
-
-.tag.red{
-  border-color:#f1b5c0;
-  background:#ffeef1;
-  color:#9f1239;
-}
-
-.tag.green{
-  border-color:#bbf7d0;
-  background:var(--okBg);
-  color:var(--ok);
-}
+.tag.red{border-color:#f1b5c0;background:#ffeef1;color:#9f1239}
+.tag.green{border-color:#bbf7d0;background:var(--okBg);color:var(--ok)}
 </style>
 </head>
 
@@ -225,6 +204,21 @@ header{
 const SCRIPT_URL="https://script.google.com/macros/s/AKfycbw4cdh6miY0FPdhHUaR8CxaRNarh01J1rY_QhCN7A5TTvyDgcDED57jZOBGk0g-m05b_A/exec";
 const POST="1";
 const REFRESH_SEC=10;
+
+/* ✅ TAVO SCHEMA (2 stulpeliai, su tuščiom vietom)
+   34 | 38
+   -- | 40
+   36 | 44
+   37 | 45
+   -- | 12
+*/
+const SCHEMA_SLOTS = [
+  "34","38",
+  null,"40",
+  "36","44",
+  "37","45",
+  null,"12",
+];
 
 let audioEnabled=false;
 let audioCtx=null;
@@ -268,33 +262,26 @@ async function api(params){
 function fmtTime(iso){
   if(!iso) return "";
   const d=new Date(iso);
-  if(isNaN(d.getTime())) return iso;
+  if(isNaN(d.getTime())) return String(iso);
   return d.toLocaleTimeString("lt-LT",{hour:"2-digit",minute:"2-digit"});
-}
-
-function wardSortKey(w){
-  const n=parseInt(w,10);
-  return Number.isFinite(n)?n:999999;
-}
-
-/* 🔥 12 lova gale */
-function bedSortKey(b){
-  const raw = b.bedNo ? String(b.bedNo) : String(b.bed||"").split("-")[1];
-  const bn = parseInt(raw,10);
-
-  if(bn===12) return 9999999;
-
-  return Number.isFinite(bn)?bn:999999;
 }
 
 function groupByWard(items){
   const map=new Map();
   for(const b of items){
     const w=String(b.ward||"");
-    if(!map.has(w)) map.set(w,[]);
+    if(!map.has(w)) map.set(w, []);
     map.get(w).push(b);
   }
   return map;
+}
+
+/* ✅ 12 lova visada gale */
+function bedSortKey(b){
+  const raw = b.bedNo ? String(b.bedNo) : String(b.bed||"").split("-")[1];
+  const bn = parseInt(raw,10);
+  if (bn === 12) return 9999999;
+  return Number.isFinite(bn) ? bn : 999999;
 }
 
 function escapeJs(s){
@@ -310,14 +297,14 @@ async function newPatient(token){
 window.newPatient=newPatient;
 
 function renderWard(ward,beds){
-  const wardHasAllergy = beds.some(b=>String(b.allergy).toUpperCase()==="YES");
-  const sortedBeds=[...beds].sort((a,b)=>bedSortKey(a)-bedSortKey(b));
-  const doneCount=sortedBeds.filter(b=>String(b.status).toUpperCase()==="DONE").length;
+  const wardHasAllergy = beds.some(b => String(b.allergy).toUpperCase()==="YES");
+  const sortedBeds = [...beds].sort((a,b)=>bedSortKey(a)-bedSortKey(b));
+  const doneCount = sortedBeds.filter(b=>String(b.status).toUpperCase()==="DONE").length;
 
   return `
-    <section class="ward ${wardHasAllergy?"allergy":""}">
+    <section class="ward ${wardHasAllergy ? "allergy" : ""}">
       <div class="wardHeaderRow">
-        <div class="wardHeader">${ward} palata ${wardHasAllergy?"— ALERGIJA":""}</div>
+        <div class="wardHeader">${ward} palata ${wardHasAllergy ? "— ALERGIJA" : ""}</div>
         <div class="wardSub">
           Lovų: <b>${sortedBeds.length}</b><br>
           Atlikta: <b>${doneCount}</b>
@@ -331,42 +318,69 @@ function renderWard(ward,beds){
 }
 
 function renderBedCard(b){
-  const bedNo=b.bedNo?String(b.bedNo):(String(b.bed||"").split("-")[1]||"");
-  const hist=Array.isArray(b.history)?b.history:[];
-  const hasHistory=hist.length>0;
-  const allergyYes=String(b.allergy).toUpperCase()==="YES";
-  const isDone=String(b.status).toUpperCase()==="DONE";
+  const bedNo = b.bedNo ? String(b.bedNo) : (String(b.bed||"").split("-")[1] || "");
+  const hist = Array.isArray(b.history) ? b.history : [];
+  const allergyYes = String(b.allergy).toUpperCase()==="YES";
+  const isDone = String(b.status).toUpperCase()==="DONE";
 
-  const historyText = hasHistory
-    ? hist.map(h=>`• ${h.pain}/10 (${fmtTime(h.time)})`).join("<br>")
+  const historyText = hist.length
+    ? hist.map(h => `• ${h.pain}/10 (${fmtTime(h.time)})`).join("<br>")
     : "Nėra vertinimų.";
 
   return `
-    <article class="bedCard ${isDone?"done":""}">
+    <article class="bedCard ${isDone ? "done" : ""}">
       <div class="bedTop">
         <div class="bedTitle">${bedNo} lova</div>
         <button class="newBtn" onclick="newPatient('${escapeJs(b.token||"")}')">Naujas pacientas</button>
       </div>
       <div class="history">${historyText}</div>
       <div class="tags">
-        ${allergyYes?`<span class="tag red">ALERGIJA</span>`:""}
-        ${isDone?`<span class="tag green">ATLIKTA</span>`:""}
+        ${allergyYes ? `<span class="tag red">ALERGIJA</span>` : ``}
+        ${isDone ? `<span class="tag green">ATLIKTA</span>` : ``}
       </div>
     </article>
   `;
 }
 
+/* garsas pagal lastTime kaip anksčiau */
+const LS_KEY="post1_seen_lastTime";
+let seen = {};
+try{ seen = JSON.parse(localStorage.getItem(LS_KEY)||"{}"); }catch(e){ seen={}; }
+let firstLoad=true;
+
 async function load(){
-  const data=await api({action:"getPostBoard", post:POST});
-  if(!data || data.ok!==true) return;
+  const data = await api({action:"getPostBoard", post:POST});
+  if(!data || data.ok !== true) return;
 
-  const grouped=groupByWard(data.beds||[]);
-  const wardsHtml=[...grouped.entries()]
-    .sort((a,b)=>wardSortKey(a[0])-wardSortKey(b[0]))
-    .map(([ward,list])=>renderWard(ward,list))
-    .join("");
+  const beds = data.beds || [];
 
-  document.getElementById("wards").innerHTML=wardsHtml;
+  // beep jei pasikeitė lastTime
+  let newEntry=false;
+  const nextSeen={...seen};
+  for(const b of beds){
+    const t = String(b.token||"");
+    const lt = String(b.lastTime||"");
+    if(!t || !lt) continue;
+    const prev = String(seen[t]||"");
+    if(!firstLoad && prev && lt !== prev) newEntry=true;
+    nextSeen[t]=lt;
+  }
+  firstLoad=false;
+  seen=nextSeen;
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(seen)); }catch(e){}
+  if(newEntry) beep();
+
+  const grouped = groupByWard(beds);
+
+  // ✅ Renderinam pagal tavo SCHEMA_SLOTS (su tuščiais langeliais)
+  const html = SCHEMA_SLOTS.map(slot => {
+    if(slot === null) return `<div class="spacer"></div>`;
+    const list = grouped.get(String(slot)) || [];
+    // jei palata dar neturi lovų duomenų – rodome tuščią kortą (kad schema nesugriūtų)
+    return renderWard(String(slot), list);
+  }).join("");
+
+  document.getElementById("wards").innerHTML = html;
 
   document.getElementById("meta").textContent =
     `Atnaujinama kas ${REFRESH_SEC}s • ` +
