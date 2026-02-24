@@ -3,162 +3,284 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Postas 1</title>
-
+<title>Slaugytojų lentelė – Postas 1</title>
 <style>
-body{font-family:Arial;margin:0;background:#f5f6f8}
-header{background:#fff;padding:12px 16px;border-bottom:1px solid #ddd;font-weight:bold}
+  body{font-family:Arial,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;background:#f5f6f8;color:#111}
+  header{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid #ddd;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .meta{font-size:12px;color:#666}
+  .btn{border:0;border-radius:10px;padding:.55rem .9rem;font-size:13px;cursor:pointer;background:#663399;color:#fff}
+  .btn.secondary{background:#f2f2f2;color:#111;border:1px solid #ddd}
 
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
-  gap:12px;
-  padding:12px;
-}
+  /* VISOS PALATOS (1 posto) tinkleliu */
+  .wards{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
+    gap:14px;
+    padding:14px;
+  }
 
-.ward{
-  background:#fff;
-  border:1px solid #ddd;
-  border-radius:14px;
-  padding:10px;
-}
+  /* PALATOS korta */
+  .ward{
+    background:#fff;
+    border:2px solid #111;
+    border-radius:12px;
+    padding:12px;
+  }
+  .wardHeader{
+    display:inline-block;
+    border:2px solid #111;
+    padding:6px 10px;
+    font-weight:900;
+    border-radius:6px;
+    margin-bottom:10px;
+    background:#fff;
+  }
 
-.bed{
-  padding:6px 0;
-  border-top:1px dashed #eee;
-  font-size:14px;
-}
+  /* jei palatoje yra alergija – palata paryškinama */
+  .ward.allergy{
+    border-color:#b00020;
+    box-shadow:0 0 0 3px rgba(176,0,32,.12);
+    background:#fff5f6;
+  }
+  .wardHeader.allergy{
+    border-color:#b00020;
+    color:#b00020;
+  }
 
-.history{
-  font-size:12px;
-  color:#444;
-  margin-top:3px;
-  line-height:1.4;
-}
+  /* LOVOS kortelė palatos viduje */
+  .bedCard{
+    border:2px solid #111;
+    border-radius:16px;
+    padding:12px;
+    margin:10px 0;
+    background:#fff;
+    min-height:120px;
+  }
 
-button{
-  border:0;
-  border-radius:8px;
-  padding:3px 7px;
-  font-size:11px;
-  cursor:pointer;
-  margin-top:4px;
-}
+  .bedTop{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:8px;
+  }
 
-.clear{background:#b00020;color:#fff}
-.done{background:#663399;color:#fff}
+  .bedTitle{
+    font-weight:900;
+    font-size:20px;
+    line-height:1.1;
+  }
+
+  .newBtn{
+    border:2px solid #111;
+    background:#fff;
+    border-radius:10px;
+    padding:6px 10px;
+    cursor:pointer;
+    font-weight:800;
+  }
+  .newBtn:hover{background:#f3f3f3}
+
+  .history{
+    font-size:16px;
+    line-height:1.45;
+    white-space:pre-line;
+  }
+
+  .tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .tag{
+    font-size:12px;
+    padding:3px 8px;
+    border-radius:999px;
+    border:1px solid #ccc;
+    background:#fafafa;
+    color:#333;
+    font-weight:700;
+  }
+  .tag.red{border-color:#b00020;background:#ffe8ec;color:#8b0018}
+  .tag.green{border-color:#22c55e;background:#eaf7ee;color:#14532d}
 </style>
 </head>
 
 <body>
-
 <header>
-  Postas 1 – visos palatos
-  <span id="time" style="font-size:12px;color:#666;margin-left:10px"></span>
+  <div>
+    <div style="font-weight:900">Slaugytojų langas – Postas 1 (visos palatos ir lovos)</div>
+    <div class="meta" id="meta">–</div>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center">
+    <button class="btn secondary" id="soundBtn">Įjungti garsą</button>
+    <button class="btn" id="refreshBtn">Atnaujinti</button>
+  </div>
 </header>
 
-<div class="grid" id="grid"></div>
+<div class="wards" id="wards"></div>
 
 <script>
 const SCRIPT_URL="https://script.google.com/macros/s/AKfycbw4cdh6miY0FPdhHUaR8CxaRNarh01J1rY_QhCN7A5TTvyDgcDED57jZOBGk0g-m05b_A/exec";
+const POST = "1";
+const REFRESH_SEC = 10;
 
-/* ===== API ===== */
+// garsas tik jei vartotoja įjungia
+let audioEnabled=false;
+let audioCtx=null;
+function beep(){
+  if(!audioEnabled) return;
+  try{
+    if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    const o=audioCtx.createOscillator();
+    const g=audioCtx.createGain();
+    o.frequency.value=880;
+    g.gain.value=0.06;
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start();
+    setTimeout(()=>o.stop(),160);
+  }catch(e){}
+}
+document.getElementById("soundBtn").addEventListener("click", async ()=>{
+  try{
+    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    await audioCtx.resume();
+    audioEnabled=true;
+    document.getElementById("soundBtn").textContent="Garsas įjungtas";
+    document.getElementById("soundBtn").disabled=true;
+    beep();
+  }catch(e){
+    alert("Nepavyko įjungti garso (naršyklės ribojimai).");
+  }
+});
+
+document.getElementById("refreshBtn").addEventListener("click", ()=>load(true));
+
 async function api(params){
   const url = SCRIPT_URL + "?" + new URLSearchParams(params);
   const res = await fetch(url);
   return await res.json();
 }
 
-/* ===== Grupavimas pagal palatas ===== */
-function groupByWard(beds){
-  const map={};
-  for(const b of beds){
-    const ward=b.bed.split("-")[0];
-    if(!map[ward]) map[ward]=[];
-    map[ward].push(b);
+function fmtTime(iso){
+  if(!iso) return "";
+  const d=new Date(iso);
+  if(isNaN(d.getTime())) return String(iso);
+  return d.toLocaleTimeString("lt-LT",{hour:"2-digit",minute:"2-digit"});
+}
+
+function groupByWard(items){
+  const map=new Map();
+  for(const b of items){
+    const w=String(b.ward||"");
+    if(!map.has(w)) map.set(w, []);
+    map.get(w).push(b);
   }
   return map;
 }
 
-/* ===== HTML ===== */
+// naujumo aptikimas garsui
+const LS_KEY="post1_seen_lastTime";
+let seen = {};
+try{ seen = JSON.parse(localStorage.getItem(LS_KEY)||"{}"); }catch(e){ seen={}; }
+let firstLoad=true;
 
-function wardHTML(ward,beds){
-  return `
-  <div class="ward">
-    <b>Palata ${ward}</b>
-    ${beds.map(bedHTML).join("")}
-  </div>`;
-}
-
-function bedHTML(b){
-  const hasData = b.history && b.history.length;
-
-  if(!hasData){
-    return `<div class="bed"><b>Lova ${b.bed}</b></div>`;
-  }
-
-  const done = b.status === "DONE";
+function renderWard(ward, beds){
+  const wardHasAllergy = beds.some(b => String(b.allergy).toUpperCase()==="YES");
 
   return `
-  <div class="bed">
-    <b>Lova ${b.bed}</b><br>
+    <div class="ward ${wardHasAllergy ? "allergy" : ""}">
+      <div class="wardHeader ${wardHasAllergy ? "allergy" : ""}">
+        ${ward} palata ${wardHasAllergy ? "— ALERGIJA" : ""}
+      </div>
 
-    <div class="history">
-      ${b.history.map(h=>{
-        const t=new Date(h.time);
-        return `• ${h.pain}/10 (${t.toLocaleTimeString("lt-LT")})`;
-      }).join("<br>")}
+      ${beds.map(renderBedCard).join("")}
     </div>
-
-    ${!done ? `<button class="done" onclick="markDone('${b.token}')">Atlikta</button>` : ""}
-
-    <button class="clear" onclick="clearBed('${b.token}')">
-      Naujas pacientas
-    </button>
-  </div>`;
+  `;
 }
 
-/* ===== LOAD ===== */
+function renderBedCard(b){
+  const bedNo = b.bedNo ? String(b.bedNo) : (String(b.bed).split("-")[1] || "");
+  const title = `${bedNo} lova`;
 
-async function load(){
-  try{
-    const data = await api({
-      action:"getDashboardDetailed",
-      post:"1"
-    });
+  const hist = Array.isArray(b.history) ? b.history : [];
+  const hasHistory = hist.length > 0;
 
-    const grouped = groupByWard(data.beds || []);
+  // jei nėra vertinimų – nieko nerodom (tik pavadinimą + mygtuką)
+  const historyText = hasHistory
+    ? hist.map(h => `• ${h.pain}/10 (${fmtTime(h.time)})`).join("\n")
+    : "";
 
-    document.getElementById("grid").innerHTML =
-      Object.entries(grouped)
-        .sort((a,b)=>Number(a[0])-Number(b[0]))
-        .map(([ward,beds])=>wardHTML(ward,beds))
-        .join("");
+  const allergyYes = String(b.allergy).toUpperCase()==="YES";
+  const isDone = String(b.status).toUpperCase()==="DONE";
 
-    document.getElementById("time").innerText =
-      "Atnaujinta " + new Date().toLocaleTimeString("lt-LT");
+  return `
+    <div class="bedCard">
+      <div class="bedTop">
+        <div class="bedTitle">${title}</div>
+        <button class="newBtn" onclick="newPatient('${escapeJs(b.token||"")}')">Naujas pacientas</button>
+      </div>
 
-  }catch(e){
-    console.error(e);
+      <div class="history">${historyText}</div>
+
+      <div class="tags">
+        ${allergyYes ? `<span class="tag red">ALERGIJA</span>` : ``}
+        ${isDone ? `<span class="tag green">ATLIKTA</span>` : ``}
+      </div>
+    </div>
+  `;
+}
+
+function escapeJs(s){
+  return String(s).replaceAll("\\","\\\\").replaceAll("'","\\'");
+}
+
+async function newPatient(token){
+  if(!token) return;
+  if(!confirm("Ar tikrai pradėti naują pacientą? Bus ištrinti visi šios lovos vertinimai.")) return;
+  await api({ action:"clearBedFull", id: token });
+  await load(true);
+}
+
+async function load(manual=false){
+  const data = await api({ action:"getPostBoard", post: POST });
+
+  if(!data || data.ok !== true){
+    alert("Klaida gaunant duomenis.");
+    return;
   }
+
+  const beds = data.beds || [];
+
+  // garsas, jei pasikeitė lastTime
+  let newEntry=false;
+  const nextSeen={...seen};
+  for(const b of beds){
+    const t = String(b.token||"");
+    const lt = String(b.lastTime||"");
+    if(!t || !lt) continue;
+    const prev = String(seen[t]||"");
+    if(!firstLoad && prev && lt !== prev) newEntry=true;
+    nextSeen[t]=lt;
+  }
+  firstLoad=false;
+  seen=nextSeen;
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(seen)); }catch(e){}
+  if(newEntry) beep();
+
+  const grouped = groupByWard(beds);
+
+  // render
+  const wardsHtml = [...grouped.entries()]
+    .sort((a,b)=>parseInt(a[0],10)-parseInt(b[0],10))
+    .map(([ward, list]) => renderWard(ward, list))
+    .join("");
+
+  document.getElementById("wards").innerHTML = wardsHtml || `<div style="padding:14px;color:#666">Nėra QR lovų poste 1.</div>`;
+
+  document.getElementById("meta").textContent =
+    `Atnaujinama kas ${REFRESH_SEC}s • Paskutinis atnaujinimas: ` +
+    new Date().toLocaleTimeString("lt-LT",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
 }
 
-/* ===== ACTIONS ===== */
-
-async function markDone(token){
-  await api({action:"markDone",id:token});
-  load();
-}
-
-async function clearBed(token){
-  if(!confirm("Ištrinti visus lovos duomenis?")) return;
-  await api({action:"clearBedFull",id:token});
-  load();
-}
-
-load();
-setInterval(load,10000);
+load(true);
+setInterval(load, REFRESH_SEC*1000);
 </script>
-
 </body>
 </html>
