@@ -31,7 +31,6 @@ body{
   color:var(--text);
 }
 
-/* HEADER */
 header{
   position:sticky;
   top:0;
@@ -67,10 +66,8 @@ header{
   border:1px solid var(--soft);
 }
 
-/* LAYOUT */
 .container{padding:18px}
 
-/* ✅ MASONRY: 2 realūs stulpeliai, be skylių */
 .wards{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -85,12 +82,10 @@ header{
   align-items:stretch;
 }
 
-/* Mobile: viena kolona */
 @media (max-width: 980px){
   .wards{grid-template-columns:1fr}
 }
 
-/* WARD */
 .ward{
   background:var(--card);
   border:1.5px solid var(--border);
@@ -123,7 +118,6 @@ header{
   white-space:nowrap;
 }
 
-/* Allergy ward */
 .ward.allergy{
   border-color:var(--danger);
   background:var(--dangerBg);
@@ -134,7 +128,6 @@ header{
   color:var(--danger);
 }
 
-/* BEDS */
 .beds{
   display:flex;
   flex-direction:column;
@@ -164,10 +157,32 @@ header{
   gap:10px;
 }
 
+.bedTitleWrap{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+}
+
 .bedTitle{
   font-weight:900;
   font-size:17px;
 }
+
+.historyToggle{
+  border:1.5px solid var(--soft);
+  background:#f9fafb;
+  border-radius:10px;
+  padding:4px 8px;
+  cursor:pointer;
+  font-weight:800;
+  font-size:11px;
+  color:var(--text);
+  user-select:none;
+  line-height:1;
+}
+.historyToggle:hover{background:#f3f4f6}
+.historyToggle:disabled{opacity:.45;cursor:default}
 
 .newBtn{
   border:1.5px solid var(--border);
@@ -178,20 +193,92 @@ header{
   font-weight:800;
   font-size:11px;
   user-select:none;
+  flex-shrink:0;
 }
 .newBtn:hover{background:#f3f4f6}
 
-.history{
-  font-size:13px;
+.currentEval{
+  margin-top:8px;
+  padding:10px;
+  border:1px solid var(--soft);
+  border-radius:14px;
+  background:#fcfcfd;
+}
+
+.currentLabel,
+.historyLabel{
+  font-size:11px;
+  font-weight:900;
   color:var(--muted);
-  margin-top:2px;
-  line-height:1.35;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+}
+
+.currentRow,
+.historyRow{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+
+.currentMain{
+  margin-top:4px;
+  font-size:15px;
+  font-weight:800;
+}
+
+.currentMeta,
+.historyMeta{
+  font-size:12px;
+  color:var(--muted);
+  white-space:nowrap;
+}
+
+.evalStatus{
+  font-size:10px;
+  padding:3px 7px;
+  border-radius:999px;
+  border:1px solid #d1d5db;
+  background:#f9fafb;
+  font-weight:900;
+  white-space:nowrap;
+}
+.evalStatus.done{
+  border-color:#bbf7d0;
+  background:var(--okBg);
+  color:var(--ok);
+}
+.evalStatus.pending{
+  border-color:#f1b5c0;
+  background:#fff7ed;
+  color:#9a3412;
+}
+
+.historyPanel{
+  margin-top:8px;
+  padding-top:8px;
+  border-top:1px dashed var(--soft);
+}
+
+.historyList{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-top:8px;
+}
+
+.historyItem{
+  border:1px solid var(--soft);
+  border-radius:12px;
+  padding:8px 10px;
+  background:#fff;
 }
 
 .tags{
   display:flex;
   gap:6px;
-  margin-top:6px;
+  margin-top:8px;
   flex-wrap:wrap;
 }
 
@@ -232,11 +319,8 @@ header{
 const SCRIPT_URL="https://script.google.com/macros/s/AKfycbw4cdh6miY0FPdhHUaR8CxaRNarh01J1rY_QhCN7A5TTvyDgcDED57jZOBGk0g-m05b_A/exec";
 const POST="1";
 const REFRESH_SEC=10;
-
-/* ✅ Tavo norima palatų seka (kaip parašei) */
 const WARD_ORDER = ["34","38","40","36","44","37","45","12"];
 
-// garsas tik jei vartotoja įjungia
 let audioEnabled=false;
 let audioCtx=null;
 function beep(){
@@ -292,7 +376,6 @@ function groupByWard(items){
   return map;
 }
 
-/* ✅ 12 lova palatos viduje visada gale */
 function bedSortKey(b){
   const raw = b.bedNo ? String(b.bedNo) : String(b.bed||"").split("-")[1];
   const bn = parseInt(raw,10);
@@ -304,6 +387,40 @@ function escapeJs(s){
   return String(s).replaceAll("\\","\\\\").replaceAll("'","\\'");
 }
 
+function normalizeHistory(hist){
+  const list = Array.isArray(hist) ? [...hist] : [];
+  return list.sort((a,b)=>{
+    const ta = new Date(a?.time || 0).getTime();
+    const tb = new Date(b?.time || 0).getTime();
+    return tb - ta;
+  });
+}
+
+function resolveEvalStatus(entry, fallbackStatus){
+  const raw = String(entry?.status || entry?.execution || entry?.done || fallbackStatus || "").toUpperCase();
+  if(raw === "DONE" || raw === "ATLIKTA" || raw === "YES" || raw === "TRUE"){
+    return { label:"Atlikta", cls:"done" };
+  }
+  return { label:"Neatlikta", cls:"pending" };
+}
+
+function renderEvalLine(entry, fallbackStatus){
+  const pain = entry?.pain ?? "–";
+  const time = fmtTime(entry?.time);
+  const status = resolveEvalStatus(entry, fallbackStatus);
+  return `
+    <div class="historyItem">
+      <div class="historyRow">
+        <div>
+          <div><b>${pain}/10</b></div>
+          <div class="historyMeta">${time || "Laikas nenurodytas"}</div>
+        </div>
+        <span class="evalStatus ${status.cls}">${status.label}</span>
+      </div>
+    </div>
+  `;
+}
+
 async function newPatient(token){
   if(!token) return;
   if(!confirm("Pradėti naują pacientą?")) return;
@@ -311,6 +428,17 @@ async function newPatient(token){
   await load(true);
 }
 window.newPatient=newPatient;
+
+function toggleHistory(id){
+  const panel=document.getElementById(id);
+  const btn=document.querySelector(`[data-history-btn="${id}"]`);
+  if(!panel || !btn) return;
+  const isOpen = panel.hidden === false;
+  panel.hidden = isOpen;
+  btn.textContent = isOpen ? "Istorija" : "Slėpti";
+  btn.setAttribute("aria-expanded", String(!isOpen));
+}
+window.toggleHistory=toggleHistory;
 
 function renderWardHtml(ward, beds){
   const wardHasAllergy = beds.some(b => String(b.allergy).toUpperCase()==="YES");
@@ -336,21 +464,55 @@ function renderWardHtml(ward, beds){
 
 function renderBedCardHtml(b){
   const bedNo = b.bedNo ? String(b.bedNo) : (String(b.bed||"").split("-")[1] || "");
-  const hist = Array.isArray(b.history) ? b.history : [];
+  const hist = normalizeHistory(b.history);
+  const mainEval = hist[0] || null;
+  const older = hist.slice(1,6);
   const allergyYes = String(b.allergy).toUpperCase()==="YES";
   const isDone = String(b.status).toUpperCase()==="DONE";
-
-  const historyText = hist.length
-    ? hist.map(h => `• ${h.pain}/10 (${fmtTime(h.time)})`).join("<br>")
-    : "Nėra vertinimų.";
+  const historyId = `hist_${String(b.token || `${b.ward}_${bedNo}`).replace(/[^a-zA-Z0-9_-]/g, "_")}`;
+  const mainStatus = resolveEvalStatus(mainEval, b.status);
 
   return `
     <article class="bedCard ${isDone ? "done" : ""}">
       <div class="bedTop">
-        <div class="bedTitle">${bedNo} lova</div>
+        <div class="bedTitleWrap">
+          <div class="bedTitle">${bedNo} lova</div>
+          <button
+            class="historyToggle"
+            type="button"
+            data-history-btn="${historyId}"
+            onclick="toggleHistory('${escapeJs(historyId)}')"
+            aria-expanded="false"
+            ${older.length ? "" : "disabled"}
+          >Istorija</button>
+        </div>
         <button class="newBtn" onclick="newPatient('${escapeJs(b.token||"")}')">Naujas pacientas</button>
       </div>
-      <div class="history">${historyText}</div>
+
+      <div class="currentEval">
+        <div class="currentLabel">Naujausias vertinimas</div>
+        ${mainEval ? `
+          <div class="currentRow">
+            <div class="currentMain">${mainEval.pain}/10</div>
+            <span class="evalStatus ${mainStatus.cls}">${mainStatus.label}</span>
+          </div>
+          <div class="currentMeta">${fmtTime(mainEval.time) || "Laikas nenurodytas"}</div>
+        ` : `
+          <div class="currentMain">Nėra vertinimų.</div>
+        `}
+
+        <div class="historyPanel" id="${historyId}" hidden>
+          <div class="historyLabel">Paskutiniai 5 senesni vertinimai</div>
+          ${older.length ? `
+            <div class="historyList">
+              ${older.map(h => renderEvalLine(h, b.status)).join("")}
+            </div>
+          ` : `
+            <div class="historyMeta" style="margin-top:6px">Senesnių vertinimų nėra.</div>
+          `}
+        </div>
+      </div>
+
       <div class="tags">
         ${allergyYes ? `<span class="tag red">ALERGIJA</span>` : ``}
         ${isDone ? `<span class="tag green">ATLIKTA</span>` : ``}
@@ -359,7 +521,6 @@ function renderBedCardHtml(b){
   `;
 }
 
-/* garsas pagal lastTime */
 const LS_KEY="post1_seen_lastTime";
 let seen = {};
 try{ seen = JSON.parse(localStorage.getItem(LS_KEY)||"{}"); }catch(e){ seen={}; }
@@ -377,13 +538,11 @@ function makeElFromHtml(html){
   return wrap.firstElementChild;
 }
 
-/* ✅ Masonry packing: dedam į trumpesnį stulpelį */
 function masonryPlace(wardEls){
   const colL=document.getElementById("colL");
   const colR=document.getElementById("colR");
   colL.innerHTML=""; colR.innerHTML="";
 
-  // jei mobile (1 kolona) – viską į kairę
   const oneColumn = window.matchMedia("(max-width: 980px)").matches;
 
   let hL=0, hR=0;
@@ -408,7 +567,6 @@ async function load(){
 
   const beds = data.beds || [];
 
-  // beep jei pasikeitė lastTime
   let newEntry=false;
   const nextSeen={...seen};
   for(const b of beds){
@@ -425,8 +583,6 @@ async function load(){
   if(newEntry) beep();
 
   const grouped = groupByWard(beds);
-
-  // palatos pagal tavo norimą order, o kitos – gale
   const allWards = [...grouped.keys()];
   const ordered = [];
   const used = new Set();
@@ -436,7 +592,6 @@ async function load(){
       ordered.push(String(w));
       used.add(String(w));
     }else{
-      // jei palata dar neturi lovų – vis tiek rodom (tuščią), kad schema laikytųsi
       ordered.push(String(w));
       used.add(String(w));
     }
@@ -450,7 +605,6 @@ async function load(){
     return makeElFromHtml(renderWardHtml(String(ward), list));
   });
 
-  // po to kai elementai DOM’e, jų aukščius galim matuoti
   masonryPlace(wardEls);
 
   document.getElementById("meta").textContent =
@@ -461,9 +615,7 @@ async function load(){
 load();
 setInterval(load, REFRESH_SEC*1000);
 
-// perskaičiavimas keičiant lango plotį (kad masonry nesusigadintų)
 window.addEventListener("resize", ()=>{
-  // lengvas debounce
   clearTimeout(window.__masonryT);
   window.__masonryT=setTimeout(load, 120);
 });
