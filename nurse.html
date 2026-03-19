@@ -18,7 +18,6 @@
   --dangerBg:#fff6f7;
   --ok:#166534;
   --okBg:#ecfdf5;
-  --pendingBg:#fff8dc;
   --pendingBorder:#e7c66b;
   --doneBorder:#86d3a4;
   --shadow:0 2px 10px rgba(0,0,0,.06);
@@ -141,7 +140,7 @@ header{
   border:1.5px solid var(--border);
   border-radius:16px;
   padding:10px 12px;
-  background:#fffdf3;
+  background:#fff;
   transition:.12s ease;
 }
 .bedCard:hover{
@@ -465,10 +464,8 @@ function normalizeHistory(hist){
 
 function buildEvaluations(b){
   const history = normalizeHistory(b.history);
-
   const currentPain = getPainValue(b);
   const currentTime = getTimeValue(b);
-
   const merged = [];
 
   if(currentPain !== null){
@@ -583,11 +580,17 @@ function renderBedCardHtml(b){
 
   const allergyYes = String(b.allergy).toUpperCase() === "YES";
   const isDone = String(b.status).toUpperCase() === "DONE";
+  const hasEvaluation = getPainValue(mainEval) !== null;
+
+  const cardStateClass = !hasEvaluation
+    ? ""
+    : (isDone ? "done" : "pending");
+
   const historyId = `hist_${String(b.token || `${b.ward}_${bedNo}`).replace(/[^a-zA-Z0-9_-]/g, "_")}`;
   const mainStatus = resolveEvalStatus(mainEval, b.status);
 
   return `
-    <article class="bedCard ${isDone ? "done" : "pending"}">
+    <article class="bedCard ${cardStateClass}">
       <div class="bedTop">
         <div class="bedTitleWrap">
           <div class="bedTitle">${bedNo} lova</div>
@@ -605,7 +608,7 @@ function renderBedCardHtml(b){
           <button
             class="doneBtn"
             onclick="markDone('${escapeJs(b.token || "")}')"
-            ${isDone ? "disabled" : ""}
+            ${isDone || !hasEvaluation ? "disabled" : ""}
           >Atlikta</button>
 
           <button
@@ -641,7 +644,7 @@ function renderBedCardHtml(b){
 
       <div class="tags">
         ${allergyYes ? `<span class="tag red">ALERGIJA</span>` : ``}
-        ${isDone ? `<span class="tag green">ATLIKTA</span>` : ``}
+        ${isDone && hasEvaluation ? `<span class="tag green">ATLIKTA</span>` : ``}
       </div>
     </article>
   `;
