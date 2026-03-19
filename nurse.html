@@ -403,9 +403,8 @@ function resolveEvalStatus(entry, fallbackStatus){
   }
   return { label:"Neatlikta", cls:"pending" };
 }
-
 function renderEvalLine(entry, fallbackStatus){
-  const pain = entry?.pain ?? "–";
+  const pain = entry?.pain ?? entry?.score ?? entry?.painScore ?? "–";
   const time = fmtTime(entry?.time);
   const status = resolveEvalStatus(entry, fallbackStatus);
   return `
@@ -493,7 +492,7 @@ function renderBedCardHtml(b){
         <div class="currentLabel">Naujausias vertinimas</div>
         ${mainEval ? `
           <div class="currentRow">
-            <div class="currentMain">${mainEval.pain}/10</div>
+           <div class="currentMain">${mainEval.pain ?? mainEval.score ?? mainEval.painScore}/10</div>
             <span class="evalStatus ${mainStatus.cls}">${mainStatus.label}</span>
           </div>
           <div class="currentMeta">${fmtTime(mainEval.time) || "Laikas nenurodytas"}</div>
