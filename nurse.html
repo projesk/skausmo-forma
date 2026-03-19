@@ -323,6 +323,7 @@ const WARD_ORDER = ["34","38","40","36","44","37","45","12"];
 
 let audioEnabled=false;
 let audioCtx=null;
+
 function beep(){
   if(!audioEnabled) return;
   try{
@@ -331,7 +332,8 @@ function beep(){
     const g=audioCtx.createGain();
     o.frequency.value=880;
     g.gain.value=0.06;
-    o.connect(g); g.connect(audioCtx.destination);
+    o.connect(g);
+    g.connect(audioCtx.destination);
     o.start();
     setTimeout(()=>o.stop(),160);
   }catch(e){}
@@ -351,7 +353,7 @@ document.getElementById("soundBtn").addEventListener("click", async ()=>{
   }
 });
 
-document.getElementById("refreshBtn").addEventListener("click", ()=>load(true));
+document.getElementById("refreshBtn").addEventListener("click", ()=>load());
 
 async function api(params){
   const url = SCRIPT_URL + "?" + new URLSearchParams(params);
@@ -361,7 +363,7 @@ async function api(params){
 
 function fmtTime(iso){
   if(!iso) return "";
-  const d=new Date(iso);
+  const d = new Date(iso);
   if(isNaN(d.getTime())) return String(iso);
   return d.toLocaleTimeString("lt-LT",{hour:"2-digit",minute:"2-digit"});
 }
@@ -369,7 +371,7 @@ function fmtTime(iso){
 function groupByWard(items){
   const map=new Map();
   for(const b of items){
-    const w=String(b.ward||"");
+    const w=String(b.ward || "");
     if(!map.has(w)) map.set(w, []);
     map.get(w).push(b);
   }
@@ -377,7 +379,7 @@ function groupByWard(items){
 }
 
 function bedSortKey(b){
-  const raw = b.bedNo ? String(b.bedNo) : String(b.bed||"").split("-")[1];
+  const raw = b.bedNo ? String(b.bedNo) : String(b.bed || "").split("-")[1];
   const bn = parseInt(raw,10);
   if (bn === 12) return 9999999;
   return Number.isFinite(bn) ? bn : 999999;
@@ -387,13 +389,82 @@ function escapeJs(s){
   return String(s).replaceAll("\\","\\\\").replaceAll("'","\\'");
 }
 
+function getPainValue(obj){
+  const val =
+    obj?.pain ??
+    obj?.lastPain ??
+    obj?.score ??
+    obj?.painScore ??
+    obj?.value ??
+    obj?.rating ??
+    null;
+
+  return (val === 0 || val) ? val : null;
+}
+
+function getTimeValue(obj){
+  return (
+    obj?.time ??
+    obj?.lastTime ??
+    obj?.timestamp ??
+    obj?.createdAt ??
+    obj?.date ??
+    null
+  );
+}
+
 function normalizeHistory(hist){
   const list = Array.isArray(hist) ? [...hist] : [];
-  return list.sort((a,b)=>{
-    const ta = new Date(a?.time || 0).getTime();
-    const tb = new Date(b?.time || 0).getTime();
-    return tb - ta;
-  });
+
+  return list
+    .map(entry => ({
+      ...entry,
+      pain: getPainValue(entry),
+      time: getTimeValue(entry)
+    }))
+    .filter(entry => entry.pain !== null)
+    .sort((a,b)=>{
+      const ta = new Date(a?.time || 0).getTime();
+      const tb = new Date(b?.time || 0).getTime();
+      return tb - ta;
+    });
+}
+
+function buildEvaluations(b){
+  const history = normalizeHistory(b.history);
+
+  const currentPain = getPainValue(b);
+  const currentTime = getTimeValue(b);
+
+  const merged = [];
+
+  if(currentPain !== null){
+    merged.push({
+      pain: currentPain,
+      time: currentTime,
+      status: b.status
+    });
+  }
+
+  for(const item of history){
+    merged.push(item);
+  }
+
+  const seen = new Set();
+
+  return merged
+    .filter(item => getPainValue(item) !== null)
+    .sort((a,b)=>{
+      const ta = new Date(getTimeValue(a) || 0).getTime();
+      const tb = new Date(getTimeValue(b) || 0).getTime();
+      return tb - ta;
+    })
+    .filter(item => {
+      const key = `${getPainValue(item)}|${getTimeValue(item) || ""}`;
+      if(seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 }
 
 function resolveEvalStatus(entry, fallbackStatus){
@@ -403,10 +474,12 @@ function resolveEvalStatus(entry, fallbackStatus){
   }
   return { label:"Neatlikta", cls:"pending" };
 }
+
 function renderEvalLine(entry, fallbackStatus){
-  const pain = entry?.pain ?? entry?.score ?? entry?.painScore ?? "–";
-  const time = fmtTime(entry?.time);
+  const pain = getPainValue(entry) ?? "–";
+  const time = fmtTime(getTimeValue(entry));
   const status = resolveEvalStatus(entry, fallbackStatus);
+
   return `
     <div class="historyItem">
       <div class="historyRow">
@@ -424,25 +497,26 @@ async function newPatient(token){
   if(!token) return;
   if(!confirm("Pradėti naują pacientą?")) return;
   await api({action:"clearBedFull", id:token});
-  await load(true);
+  await load();
 }
-window.newPatient=newPatient;
+window.newPatient = newPatient;
 
 function toggleHistory(id){
-  const panel=document.getElementById(id);
-  const btn=document.querySelector(`[data-history-btn="${id}"]`);
+  const panel = document.getElementById(id);
+  const btn = document.querySelector(`[data-history-btn="${id}"]`);
   if(!panel || !btn) return;
+
   const isOpen = panel.hidden === false;
   panel.hidden = isOpen;
   btn.textContent = isOpen ? "Istorija" : "Slėpti";
   btn.setAttribute("aria-expanded", String(!isOpen));
 }
-window.toggleHistory=toggleHistory;
+window.toggleHistory = toggleHistory;
 
 function renderWardHtml(ward, beds){
-  const wardHasAllergy = beds.some(b => String(b.allergy).toUpperCase()==="YES");
+  const wardHasAllergy = beds.some(b => String(b.allergy).toUpperCase() === "YES");
   const sortedBeds = [...beds].sort((a,b)=>bedSortKey(a)-bedSortKey(b));
-  const doneCount = sortedBeds.filter(b => String(b.status).toUpperCase()==="DONE").length;
+  const doneCount = sortedBeds.filter(b => String(b.status).toUpperCase() === "DONE").length;
 
   return `
     <section class="ward ${wardHasAllergy ? "allergy" : ""}">
@@ -462,12 +536,13 @@ function renderWardHtml(ward, beds){
 }
 
 function renderBedCardHtml(b){
-  const bedNo = b.bedNo ? String(b.bedNo) : (String(b.bed||"").split("-")[1] || "");
-  const hist = normalizeHistory(b.history);
-  const mainEval = hist[0] || null;
-  const older = hist.slice(1,6);
-  const allergyYes = String(b.allergy).toUpperCase()==="YES";
-  const isDone = String(b.status).toUpperCase()==="DONE";
+  const bedNo = b.bedNo ? String(b.bedNo) : (String(b.bed || "").split("-")[1] || "");
+  const evals = buildEvaluations(b);
+  const mainEval = evals[0] || null;
+  const older = evals.slice(1,6);
+
+  const allergyYes = String(b.allergy).toUpperCase() === "YES";
+  const isDone = String(b.status).toUpperCase() === "DONE";
   const historyId = `hist_${String(b.token || `${b.ward}_${bedNo}`).replace(/[^a-zA-Z0-9_-]/g, "_")}`;
   const mainStatus = resolveEvalStatus(mainEval, b.status);
 
@@ -485,17 +560,17 @@ function renderBedCardHtml(b){
             ${older.length ? "" : "disabled"}
           >Istorija</button>
         </div>
-        <button class="newBtn" onclick="newPatient('${escapeJs(b.token||"")}')">Naujas pacientas</button>
+        <button class="newBtn" onclick="newPatient('${escapeJs(b.token || "")}')">Naujas pacientas</button>
       </div>
 
       <div class="currentEval">
         <div class="currentLabel">Naujausias vertinimas</div>
         ${mainEval ? `
           <div class="currentRow">
-           <div class="currentMain">${mainEval.pain ?? mainEval.score ?? mainEval.painScore}/10</div>
+            <div class="currentMain">${getPainValue(mainEval) ?? "–"}/10</div>
             <span class="evalStatus ${mainStatus.cls}">${mainStatus.label}</span>
           </div>
-          <div class="currentMeta">${fmtTime(mainEval.time) || "Laikas nenurodytas"}</div>
+          <div class="currentMeta">${fmtTime(getTimeValue(mainEval)) || "Laikas nenurodytas"}</div>
         ` : `
           <div class="currentMain">Nėra vertinimų.</div>
         `}
@@ -520,31 +595,36 @@ function renderBedCardHtml(b){
   `;
 }
 
-const LS_KEY="post1_seen_lastTime";
+const LS_KEY = "post1_seen_lastTime";
 let seen = {};
-try{ seen = JSON.parse(localStorage.getItem(LS_KEY)||"{}"); }catch(e){ seen={}; }
-let firstLoad=true;
+try{
+  seen = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
+}catch(e){
+  seen = {};
+}
+let firstLoad = true;
 
 function numericWardSort(a,b){
-  const na=parseInt(a,10), nb=parseInt(b,10);
-  if(Number.isFinite(na) && Number.isFinite(nb)) return na-nb;
+  const na = parseInt(a,10), nb = parseInt(b,10);
+  if(Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
   return String(a).localeCompare(String(b));
 }
 
 function makeElFromHtml(html){
-  const wrap=document.createElement("div");
-  wrap.innerHTML=html.trim();
+  const wrap = document.createElement("div");
+  wrap.innerHTML = html.trim();
   return wrap.firstElementChild;
 }
 
 function masonryPlace(wardEls){
-  const colL=document.getElementById("colL");
-  const colR=document.getElementById("colR");
-  colL.innerHTML=""; colR.innerHTML="";
+  const colL = document.getElementById("colL");
+  const colR = document.getElementById("colR");
+  colL.innerHTML = "";
+  colR.innerHTML = "";
 
   const oneColumn = window.matchMedia("(max-width: 980px)").matches;
 
-  let hL=0, hR=0;
+  let hL = 0, hR = 0;
   for(const el of wardEls){
     if(oneColumn){
       colL.appendChild(el);
@@ -566,19 +646,26 @@ async function load(){
 
   const beds = data.beds || [];
 
-  let newEntry=false;
-  const nextSeen={...seen};
+  let newEntry = false;
+  const nextSeen = {...seen};
+
   for(const b of beds){
-    const t = String(b.token||"");
-    const lt = String(b.lastTime||"");
+    const t = String(b.token || "");
+    const lt = String(b.lastTime || "");
     if(!t || !lt) continue;
-    const prev = String(seen[t]||"");
-    if(!firstLoad && prev && lt !== prev) newEntry=true;
-    nextSeen[t]=lt;
+
+    const prev = String(seen[t] || "");
+    if(!firstLoad && prev && lt !== prev) newEntry = true;
+    nextSeen[t] = lt;
   }
-  firstLoad=false;
-  seen=nextSeen;
-  try{ localStorage.setItem(LS_KEY, JSON.stringify(seen)); }catch(e){}
+
+  firstLoad = false;
+  seen = nextSeen;
+
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify(seen));
+  }catch(e){}
+
   if(newEntry) beep();
 
   const grouped = groupByWard(beds);
@@ -587,13 +674,8 @@ async function load(){
   const used = new Set();
 
   for(const w of WARD_ORDER){
-    if(grouped.has(String(w))){
-      ordered.push(String(w));
-      used.add(String(w));
-    }else{
-      ordered.push(String(w));
-      used.add(String(w));
-    }
+    ordered.push(String(w));
+    used.add(String(w));
   }
 
   const rest = allWards.filter(w => !used.has(String(w))).sort(numericWardSort);
@@ -612,11 +694,11 @@ async function load(){
 }
 
 load();
-setInterval(load, REFRESH_SEC*1000);
+setInterval(load, REFRESH_SEC * 1000);
 
 window.addEventListener("resize", ()=>{
   clearTimeout(window.__masonryT);
-  window.__masonryT=setTimeout(load, 120);
+  window.__masonryT = setTimeout(load, 120);
 });
 </script>
 </body>
