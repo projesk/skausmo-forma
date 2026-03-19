@@ -20,8 +20,8 @@
   --okBg:#ecfdf5;
   --pendingBorder:#e7c66b;
   --doneBorder:#86d3a4;
-  --shadow:0 2px 10px rgba(0,0,0,.06);
-  --shadowHover:0 8px 18px rgba(0,0,0,.10);
+  --shadow:0 1px 6px rgba(0,0,0,.05);
+  --shadowHover:0 4px 12px rgba(0,0,0,.08);
 }
 
 *{box-sizing:border-box}
@@ -40,22 +40,22 @@ header{
   background:rgba(255,255,255,.95);
   backdrop-filter:blur(6px);
   border-bottom:1px solid var(--soft);
-  padding:14px 18px;
+  padding:10px 14px;
   display:flex;
   justify-content:space-between;
   align-items:center;
-  gap:12px;
+  gap:10px;
 }
 
-.title{font-weight:900;font-size:16px}
-.meta{font-size:12px;color:var(--muted)}
-.actions{display:flex;gap:10px;align-items:center}
+.title{font-weight:900;font-size:15px}
+.meta{font-size:11px;color:var(--muted)}
+.actions{display:flex;gap:8px;align-items:center}
 
 .btn{
   border:0;
-  border-radius:14px;
-  padding:.6rem 1rem;
-  font-size:13px;
+  border-radius:12px;
+  padding:.45rem .85rem;
+  font-size:12px;
   cursor:pointer;
   background:var(--primary);
   color:#fff;
@@ -68,19 +68,19 @@ header{
   border:1px solid var(--soft);
 }
 
-.container{padding:18px}
+.container{padding:12px}
 
 .wards{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:18px;
+  gap:12px;
   align-items:start;
 }
 
 .col{
   display:flex;
   flex-direction:column;
-  gap:18px;
+  gap:12px;
   align-items:stretch;
 }
 
@@ -91,8 +91,8 @@ header{
 .ward{
   background:var(--card);
   border:1.5px solid var(--border);
-  border-radius:18px;
-  padding:14px;
+  border-radius:16px;
+  padding:10px;
   box-shadow:var(--shadow);
 }
 
@@ -100,30 +100,31 @@ header{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:10px;
-  gap:10px;
+  margin-bottom:8px;
+  gap:8px;
 }
 
 .wardHeader{
   border:1.5px solid var(--border);
-  padding:6px 12px;
+  padding:4px 10px;
   font-weight:900;
-  border-radius:12px;
-  font-size:15px;
+  border-radius:10px;
+  font-size:13px;
   white-space:nowrap;
 }
 
 .wardSub{
-  font-size:12px;
+  font-size:11px;
   color:var(--muted);
   text-align:right;
   white-space:nowrap;
+  line-height:1.2;
 }
 
 .ward.allergy{
   border-color:var(--danger);
   background:var(--dangerBg);
-  box-shadow:0 0 0 3px rgba(176,0,32,.08), var(--shadow);
+  box-shadow:0 0 0 2px rgba(176,0,32,.08), var(--shadow);
 }
 .ward.allergy .wardHeader{
   border-color:var(--danger);
@@ -133,13 +134,13 @@ header{
 .beds{
   display:flex;
   flex-direction:column;
-  gap:10px;
+  gap:7px;
 }
 
 .bedCard{
   border:1.5px solid var(--border);
-  border-radius:16px;
-  padding:10px 12px;
+  border-radius:13px;
+  padding:7px 9px;
   background:#fff;
   transition:.12s ease;
 }
@@ -162,52 +163,52 @@ header{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  gap:10px;
+  gap:8px;
 }
 
 .bedTitleWrap{
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:6px;
   min-width:0;
 }
 
 .bedTitle{
   font-weight:900;
-  font-size:17px;
+  font-size:15px;
+  line-height:1.1;
 }
 
 .historyToggle{
-  border:1.5px solid var(--soft);
+  border:1px solid var(--soft);
   background:#f9fafb;
-  border-radius:10px;
-  padding:4px 8px;
+  border-radius:8px;
+  padding:3px 7px;
   cursor:pointer;
   font-weight:800;
-  font-size:11px;
+  font-size:10px;
   color:var(--text);
   user-select:none;
   line-height:1;
 }
 .historyToggle:hover{background:#f3f4f6}
-.historyToggle:disabled{opacity:.45;cursor:default}
 
 .bedActions{
   display:flex;
   align-items:center;
-  gap:6px;
+  gap:5px;
   flex-shrink:0;
 }
 
 .doneBtn{
-  border:1.5px solid #86d3a4;
+  border:1px solid #86d3a4;
   background:#ecfdf5;
   color:#166534;
-  border-radius:12px;
-  padding:5px 8px;
+  border-radius:9px;
+  padding:4px 7px;
   cursor:pointer;
   font-weight:800;
-  font-size:11px;
+  font-size:10px;
   user-select:none;
 }
 .doneBtn:hover{background:#dcfce7}
@@ -217,33 +218,24 @@ header{
 }
 
 .newBtn{
-  border:1.5px solid var(--border);
+  border:1px solid var(--border);
   background:#fff;
-  border-radius:12px;
-  padding:5px 8px;
+  border-radius:9px;
+  padding:4px 7px;
   cursor:pointer;
   font-weight:800;
-  font-size:11px;
+  font-size:10px;
   user-select:none;
   flex-shrink:0;
 }
 .newBtn:hover{background:#f3f4f6}
 
 .currentEval{
-  margin-top:8px;
-  padding:10px;
+  margin-top:5px;
+  padding:7px 8px;
   border:1px solid var(--soft);
-  border-radius:14px;
+  border-radius:11px;
   background:#fcfcfd;
-}
-
-.currentLabel,
-.historyLabel{
-  font-size:11px;
-  font-weight:900;
-  color:var(--muted);
-  letter-spacing:.02em;
-  text-transform:uppercase;
 }
 
 .currentRow,
@@ -251,25 +243,25 @@ header{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  gap:10px;
+  gap:8px;
 }
 
 .currentMain{
-  margin-top:4px;
-  font-size:15px;
+  font-size:14px;
   font-weight:800;
+  line-height:1.1;
 }
 
 .currentMeta,
-.historyMeta{
-  font-size:12px;
+.historyMeta,
+.historyLabel{
+  font-size:11px;
   color:var(--muted);
-  white-space:nowrap;
 }
 
 .evalStatus{
-  font-size:10px;
-  padding:3px 7px;
+  font-size:9px;
+  padding:3px 6px;
   border-radius:999px;
   border:1px solid #d1d5db;
   background:#f9fafb;
@@ -288,35 +280,35 @@ header{
 }
 
 .historyPanel{
-  margin-top:8px;
-  padding-top:8px;
+  margin-top:6px;
+  padding-top:6px;
   border-top:1px dashed var(--soft);
 }
 
 .historyList{
   display:flex;
   flex-direction:column;
-  gap:6px;
-  margin-top:8px;
+  gap:5px;
+  margin-top:6px;
 }
 
 .historyItem{
   border:1px solid var(--soft);
-  border-radius:12px;
-  padding:8px 10px;
+  border-radius:10px;
+  padding:6px 8px;
   background:#fff;
 }
 
 .tags{
   display:flex;
-  gap:6px;
-  margin-top:8px;
+  gap:5px;
+  margin-top:6px;
   flex-wrap:wrap;
 }
 
 .tag{
-  font-size:10px;
-  padding:3px 7px;
+  font-size:9px;
+  padding:2px 6px;
   border-radius:999px;
   border:1px solid #d1d5db;
   background:#f9fafb;
@@ -447,7 +439,6 @@ function getTimeValue(obj){
 
 function normalizeHistory(hist){
   const list = Array.isArray(hist) ? [...hist] : [];
-
   return list
     .map(entry => ({
       ...entry,
@@ -543,10 +534,10 @@ function toggleHistory(id){
   const btn = document.querySelector(`[data-history-btn="${id}"]`);
   if(!panel || !btn) return;
 
-  const isOpen = panel.hidden === false;
-  panel.hidden = isOpen;
-  btn.textContent = isOpen ? "Istorija" : "Slėpti";
-  btn.setAttribute("aria-expanded", String(!isOpen));
+  const isHidden = panel.hidden;
+  panel.hidden = !isHidden;
+  btn.textContent = isHidden ? "Slėpti" : "Istorija";
+  btn.setAttribute("aria-expanded", String(isHidden));
 }
 window.toggleHistory = toggleHistory;
 
@@ -581,10 +572,9 @@ function renderBedCardHtml(b){
   const allergyYes = String(b.allergy).toUpperCase() === "YES";
   const isDone = String(b.status).toUpperCase() === "DONE";
   const hasEvaluation = getPainValue(mainEval) !== null;
+  const hasOlderHistory = older.length > 0;
 
-  const cardStateClass = !hasEvaluation
-    ? ""
-    : (isDone ? "done" : "pending");
+  const cardStateClass = !hasEvaluation ? "" : (isDone ? "done" : "pending");
 
   const historyId = `hist_${String(b.token || `${b.ward}_${bedNo}`).replace(/[^a-zA-Z0-9_-]/g, "_")}`;
   const mainStatus = resolveEvalStatus(mainEval, b.status);
@@ -594,14 +584,15 @@ function renderBedCardHtml(b){
       <div class="bedTop">
         <div class="bedTitleWrap">
           <div class="bedTitle">${bedNo} lova</div>
-          <button
-            class="historyToggle"
-            type="button"
-            data-history-btn="${historyId}"
-            onclick="toggleHistory('${escapeJs(historyId)}')"
-            aria-expanded="false"
-            ${older.length ? "" : "disabled"}
-          >Istorija</button>
+          ${hasOlderHistory ? `
+            <button
+              class="historyToggle"
+              type="button"
+              data-history-btn="${historyId}"
+              onclick="toggleHistory('${escapeJs(historyId)}')"
+              aria-expanded="false"
+            >Istorija</button>
+          ` : ``}
         </div>
 
         <div class="bedActions">
@@ -619,7 +610,6 @@ function renderBedCardHtml(b){
       </div>
 
       <div class="currentEval">
-        <div class="currentLabel">Naujausias vertinimas</div>
         ${mainEval ? `
           <div class="currentRow">
             <div class="currentMain">${getPainValue(mainEval) ?? "–"}/10</div>
@@ -627,19 +617,17 @@ function renderBedCardHtml(b){
           </div>
           <div class="currentMeta">${fmtTime(getTimeValue(mainEval)) || "Laikas nenurodytas"}</div>
         ` : `
-          <div class="currentMain">Nėra vertinimų.</div>
+          <div class="currentMain">Nėra vertinimo</div>
         `}
 
-        <div class="historyPanel" id="${historyId}" hidden>
-          <div class="historyLabel">Paskutiniai 5 senesni vertinimai</div>
-          ${older.length ? `
+        ${hasOlderHistory ? `
+          <div class="historyPanel" id="${historyId}" hidden>
+            <div class="historyLabel">Paskutiniai 5 senesni vertinimai</div>
             <div class="historyList">
               ${older.map(h => renderEvalLine(h, b.status)).join("")}
             </div>
-          ` : `
-            <div class="historyMeta" style="margin-top:6px">Senesnių vertinimų nėra.</div>
-          `}
-        </div>
+          </div>
+        ` : ``}
       </div>
 
       <div class="tags">
@@ -687,10 +675,10 @@ function masonryPlace(wardEls){
     }
     if(hL <= hR){
       colL.appendChild(el);
-      hL += el.getBoundingClientRect().height + 18;
+      hL += el.getBoundingClientRect().height + 12;
     }else{
       colR.appendChild(el);
-      hR += el.getBoundingClientRect().height + 18;
+      hR += el.getBoundingClientRect().height + 12;
     }
   }
 }
